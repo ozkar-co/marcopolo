@@ -150,10 +150,12 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && suggestions.length > 0) {
+      e.preventDefault(); // Prevenir comportamiento por defecto
       // Seleccionar la primera sugerencia al presionar Enter
-      const selectedCountry = suggestions[0];
-      setInputValue(selectedCountry.name);
-      handleGuessWithCountry(selectedCountry);
+      handleGuessWithCountry(suggestions[0]);
+      // Limpiar el input y las sugerencias inmediatamente
+      setInputValue('');
+      setSuggestions([]);
     }
   };
 
@@ -280,6 +282,7 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
               placeholder="Escribe el nombre del país..."
               className="country-input"
               disabled={gameOverState}
+              autoComplete="off"
             />
             
             {message && <p className={message.includes('Correcto') ? 'success-message' : 'error-message'}>{message}</p>}
@@ -290,8 +293,10 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
                   <li 
                     key={country.name} 
                     onClick={() => {
-                      setInputValue(country.name);
                       handleGuessWithCountry(country);
+                      // Limpiar el input y las sugerencias inmediatamente
+                      setInputValue('');
+                      setSuggestions([]);
                     }}
                     className="suggestion-item"
                   >
