@@ -394,6 +394,7 @@ body.game-page {
   white-space: nowrap;
   margin-left: 10px;
   flex-shrink: 0;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.7), -1px -1px 1px rgba(0, 0, 0, 0.7), 1px -1px 1px rgba(0, 0, 0, 0.7), -1px 1px 1px rgba(0, 0, 0, 0.7);
 }
 
 .error-message {
