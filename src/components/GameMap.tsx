@@ -10,6 +10,11 @@ const normalizeText = (text: string): string => {
     .replace(/[\u0300-\u036f]/g, "");
 };
 
+// Función para obtener la URL de la bandera
+const getFlagUrl = (countryCode: string): string => {
+  return `https://flagcdn.com/16x12/${countryCode.toLowerCase()}.png`;
+};
+
 interface Guess {
   country: Country;
   distance: number;
@@ -127,7 +132,16 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
                   onClick={() => handleGuess(country)}
                   className="suggestion-item"
                 >
-                  {country.name}
+                  <img 
+                    src={getFlagUrl(country.code)} 
+                    alt={`Bandera de ${country.name}`}
+                    className="country-flag"
+                    onError={(e) => {
+                      // Si la imagen falla, usar una imagen de respaldo
+                      (e.target as HTMLImageElement).src = 'https://flagcdn.com/16x12/xx.png';
+                    }}
+                  />
+                  <span className="country-name">{country.name}</span>
                 </li>
               ))}
             </ul>
@@ -164,7 +178,18 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
                 className="guess-item"
                 style={{ borderLeft: `4px solid ${getDistanceColor(guess.distance)}` }}
               >
-                <div style={{ fontWeight: 'bold' }}>{guess.country.name}</div>
+                <div className="guess-header">
+                  <img 
+                    src={getFlagUrl(guess.country.code)} 
+                    alt={`Bandera de ${guess.country.name}`}
+                    className="country-flag"
+                    onError={(e) => {
+                      // Si la imagen falla, usar una imagen de respaldo
+                      (e.target as HTMLImageElement).src = 'https://flagcdn.com/16x12/xx.png';
+                    }}
+                  />
+                  <span style={{ fontWeight: 'bold' }}>{guess.country.name}</span>
+                </div>
                 <div>Capital: {guess.country.capital}</div>
                 <div style={{ 
                   marginTop: '5px', 

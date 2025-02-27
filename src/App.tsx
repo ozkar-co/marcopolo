@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import GameMap from './components/GameMap'
-import GuessList from './components/GuessList'
 import { Country, getRandomCountry } from './data/countries'
 
 interface Guess {
