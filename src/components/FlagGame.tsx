@@ -9,8 +9,13 @@ const normalizeText = (text: string): string => {
     .replace(/[\u0300-\u036f]/g, "");
 };
 
-// Función para obtener la URL de la bandera con altura fija
+// Función para obtener la URL de la bandera con altura fija o tamaño específico
 const getFlagUrl = (countryCode: string, height: number = 120): string => {
+  // Para miniaturas (16px de altura), usar el formato 16x12
+  if (height === 16) {
+    return `https://flagcdn.com/16x12/${countryCode.toLowerCase()}.png`;
+  }
+  // Para otros tamaños, usar el formato h{height}
   return `https://flagcdn.com/h${height}/${countryCode.toLowerCase()}.png`;
 };
 
@@ -202,7 +207,7 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
                       alt={`Bandera de ${attempt.name}`}
                       className="country-flag"
                       onError={(e) => {
-                        // Si la imagen falla, usar una imagen de respaldo
+                        // Si la imagen falla, usar una imagen de respaldo que coincida con el tamaño
                         (e.target as HTMLImageElement).src = 'https://flagcdn.com/16x12/xx.png';
                       }}
                     />
