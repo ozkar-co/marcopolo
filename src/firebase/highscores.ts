@@ -22,6 +22,7 @@ export interface Highscore {
   attempts: number;
   totalDistance?: number;
   usedHint?: boolean;
+  totalHints?: number; // Número total de pistas usadas
   winningCountry?: WinningCountry; // País con el que se ganó
 }
 
@@ -39,6 +40,7 @@ export const saveHighscore = async (highscore: Omit<Highscore, 'date'>): Promise
       attempts: highscore.attempts || 0,
       totalDistance: highscore.totalDistance || 0,
       usedHint: highscore.usedHint || false,
+      totalHints: highscore.totalHints || 0, // Inicializar totalHints
       // El país ganador es opcional
       winningCountry: highscore.winningCountry || null
     };
@@ -59,7 +61,7 @@ export const getTopHighscores = async (gameType: GameType, limit_count: number =
     let q = query(
       highscoresCollection,
       where("gameType", "==", gameType),
-      orderBy('attempts', 'asc'), // Ordenar por intentos ascendente (menos es mejor)
+      orderBy('score', 'asc'), // Ordenar por score ascendente (menos es mejor)
       limit(limit_count)
     );
     
@@ -76,6 +78,7 @@ export const getTopHighscores = async (gameType: GameType, limit_count: number =
         attempts: data.attempts || 0,
         totalDistance: data.totalDistance || 0,
         usedHint: data.usedHint || false,
+        totalHints: data.totalHints || 0, // Incluir totalHints
         winningCountry: data.winningCountry || undefined
       });
     });
@@ -89,6 +92,17 @@ export const getTopHighscores = async (gameType: GameType, limit_count: number =
         }
         // Si hay empate en intentos, ordenar por distancia total
         return (a.totalDistance || 0) - (b.totalDistance || 0);
+      });
+    } 
+    // Para el juego de banderas, ordenamos por intentos y luego por pistas
+    else if (gameType === GameType.FLAG) {
+      highscores.sort((a, b) => {
+        // Primero ordenar por intentos
+        if (a.attempts !== b.attempts) {
+          return a.attempts - b.attempts;
+        }
+        // Si hay empate en intentos, ordenar por número de pistas (menos es mejor)
+        return (a.totalHints || 0) - (b.totalHints || 0);
       });
     }
     

@@ -16,6 +16,7 @@ interface Score {
   attempts: number;
   totalDistance: number;
   usedHint?: boolean;
+  totalHints?: number; // Nuevo campo para el total de pistas usadas
   winningCountry?: WinningCountry;
 }
 
@@ -43,6 +44,8 @@ function App() {
   const [playerName, setPlayerName] = useState('');
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [resetGlobe, setResetGlobe] = useState(false);
+  // Estado para controlar si el juego de banderas ha completado todas las rondas
+  const [flagGameCompleted, setFlagGameCompleted] = useState(false);
 
   // Efecto para cambiar la clase del body según el estado del juego
   useEffect(() => {
@@ -68,10 +71,10 @@ function App() {
 
   useEffect(() => {
     // Mostrar el modal cuando el juego termina
-    if (gameOver) {
+    if (gameOver && (gameType === GameType.COUNTRY || flagGameCompleted)) {
       setShowModal(true);
     }
-  }, [gameOver]);
+  }, [gameOver, gameType, flagGameCompleted]);
 
   const addGuess = (guess: Guess) => {
     setGuesses(prev => [...prev, guess]);
@@ -114,21 +117,19 @@ function App() {
     setScore({ attempts: 0, totalDistance: 0 });
     setPlayerName('');
     setScoreSubmitted(false);
+    setFlagGameCompleted(false); // Reiniciar el estado de juego de banderas completado
   };
 
   const handleCorrectFlagGuess = (attempts: number, usedHint: boolean) => {
-    // Actualizar la puntuación para el juego de banderas
+    // Esta función ahora solo se llama cuando se completan todas las rondas
     setScore({
       attempts,
       totalDistance: 0,
-      usedHint
+      usedHint,
+      totalHints: usedHint ? 1 : 0
     });
     setGameOver(true);
-  };
-
-  // Función para incrementar el número de intentos en el juego de banderas
-  const incrementAttempts = () => {
-    // Ya no necesitamos este estado separado, se maneja en FlagGame
+    setFlagGameCompleted(true); // Marcar que se han completado todas las rondas
   };
 
   const handleNewFlagGame = () => {
@@ -137,6 +138,7 @@ function App() {
     setScore({ attempts: 0, totalDistance: 0 });
     setPlayerName('');
     setScoreSubmitted(false);
+    setFlagGameCompleted(false); // Reiniciar el estado de juego de banderas completado
   };
 
   const goToHomePage = () => {
@@ -145,6 +147,7 @@ function App() {
     setCurrentPage(PageType.HOME);
     setShowModal(false);
     setScoreSubmitted(false);
+    setFlagGameCompleted(false); // Reiniciar el estado de juego de banderas completado
   };
 
   const goToAboutPage = () => {
@@ -186,6 +189,7 @@ function App() {
           attempts: score.attempts,
           totalDistance: score.totalDistance || 0,
           usedHint: score.usedHint || false,
+          totalHints: score.totalHints || 0,
           winningCountry: score.winningCountry
         });
         
@@ -292,7 +296,12 @@ function App() {
                 onCorrectGuess={handleCorrectFlagGuess}
                 onNewGame={handleNewFlagGame}
                 gameOver={gameOver}
-                onGameOver={setGameOver}
+                onGameOver={(isCorrect) => {
+                  // Solo establecer gameOver a true si se han completado todas las rondas
+                  if (isCorrect && flagGameCompleted) {
+                    setGameOver(true);
+                  }
+                }}
               />
             )}
 
@@ -316,12 +325,17 @@ function App() {
             <div className="modal-content">
               <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
               <h2>¡Felicidades!</h2>
-              <p>Has ganado el juego.</p>
               
               {gameType === GameType.COUNTRY ? (
-                <p>Tu puntuación: {score.attempts} intentos (distancia total: {score.totalDistance.toFixed(0)} km)</p>
+                <>
+                  <p>Has encontrado el país correcto.</p>
+                  <p>Tu puntuación: {score.attempts} intentos (distancia total: {score.totalDistance.toFixed(0)} km)</p>
+                </>
               ) : (
-                <p>Tu puntuación: {score.attempts} intentos {score.usedHint ? '(con pista)' : '(sin pista)'}</p>
+                <>
+                  <p>Has completado las 10 rondas del juego de banderas.</p>
+                  <p>Tu puntuación: {score.attempts} intentos totales {score.totalHints && score.totalHints > 0 ? `(${score.totalHints} pistas usadas)` : '(sin pistas)'}</p>
+                </>
               )}
               
               <div className="player-name-input">

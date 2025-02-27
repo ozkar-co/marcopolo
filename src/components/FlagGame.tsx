@@ -26,6 +26,14 @@ interface FlagGameProps {
   onGameOver: (isCorrect: boolean) => void;
 }
 
+// Interfaz para una ronda de juego
+interface Round {
+  country: Country;
+  attempts: number;
+  usedHint: boolean;
+  completed: boolean;
+}
+
 const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver, onGameOver }) => {
   const [targetCountry, setTargetCountry] = useState<Country | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -34,17 +42,25 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
   const [message, setMessage] = useState('');
   const [showHint, setShowHint] = useState(false);
   const [gameOverState, setGameOverState] = useState(gameOver);
+  
+  // Estado para el sistema de rondas
+  const [rounds, setRounds] = useState<Round[]>([]);
+  const [currentRound, setCurrentRound] = useState(0);
+  const [totalAttempts, setTotalAttempts] = useState(0);
+  const [totalHints, setTotalHints] = useState(0);
+  const TOTAL_ROUNDS = 10;
 
   // Inicializar el juego
   useEffect(() => {
     startNewGame();
   }, []);
 
-  // Reiniciar el juego cuando cambia gameOver de true a false
+  // Reiniciar el juego cuando cambia gameOver de false a true
   useEffect(() => {
-    if (gameOver === false && targetCountry !== null) {
+    if (gameOver === false && gameOverState === true) {
       startNewGame();
     }
+    setGameOverState(gameOver);
   }, [gameOver]);
 
   // Filtrar sugerencias basadas en el input y excluir países ya intentados
@@ -63,15 +79,68 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
     }
   }, [inputValue, attempts]);
 
+  // Generar un país aleatorio que no esté en las rondas actuales
+  const getRandomCountryForRound = (): Country => {
+    const usedCountries = rounds.map(round => round.country.code);
+    let availableCountries = countries.filter(country => !usedCountries.includes(country.code));
+    
+    // Si no hay suficientes países disponibles, usar todos los países
+    if (availableCountries.length === 0) {
+      availableCountries = countries;
+    }
+    
+    const randomIndex = Math.floor(Math.random() * availableCountries.length);
+    return availableCountries[randomIndex];
+  };
+
+  // Iniciar una nueva ronda
+  const startNewRound = () => {
+    if (currentRound < TOTAL_ROUNDS) {
+      const newCountry = getRandomCountryForRound();
+      setTargetCountry(newCountry);
+      setInputValue('');
+      setSuggestions([]);
+      setAttempts([]);
+      setMessage('');
+      setShowHint(false);
+      
+      // Actualizar el estado de la ronda actual
+      const updatedRounds = [...rounds];
+      if (!updatedRounds[currentRound]) {
+        updatedRounds[currentRound] = {
+          country: newCountry,
+          attempts: 0,
+          usedHint: false,
+          completed: false
+        };
+        setRounds(updatedRounds);
+      }
+    } else {
+      // Todas las rondas completadas, finalizar el juego
+      finishGame();
+    }
+  };
+
+  // Iniciar un nuevo juego completo
   const startNewGame = () => {
-    const randomIndex = Math.floor(Math.random() * countries.length);
-    setTargetCountry(countries[randomIndex]);
-    setInputValue('');
-    setSuggestions([]);
-    setAttempts([]);
-    setMessage('');
-    setShowHint(false);
+    setRounds([]);
+    setCurrentRound(0);
+    setTotalAttempts(0);
+    setTotalHints(0);
     setGameOverState(false);
+    
+    // Iniciar la primera ronda
+    setTimeout(() => {
+      startNewRound();
+    }, 0);
+  };
+
+  // Finalizar el juego y enviar la puntuación
+  const finishGame = () => {
+    // Solo cuando se completan todas las rondas, notificar al componente padre
+    onCorrectGuess(totalAttempts, totalHints > 0);
+    onGameOver(true);
+    setGameOverState(true);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,13 +165,37 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
       return;
     }
     
+    // Incrementar el número de intentos para la ronda actual
+    const updatedRounds = [...rounds];
+    updatedRounds[currentRound].attempts += 1;
+    setRounds(updatedRounds);
+    setTotalAttempts(prev => prev + 1);
+    
     // Verificar si es el país correcto
     if (targetCountry && normalizeText(country.name) === normalizeText(targetCountry.name)) {
-      setMessage('¡Correcto! Has adivinado el país.');
-      setGameOverState(true);
-      onGameOver(true);
-      // Pasar el número de intentos y si se usó pista al componente padre
-      onCorrectGuess(attempts.length + 1, showHint);
+      // Actualizar el estado de la ronda actual como completada
+      updatedRounds[currentRound].completed = true;
+      updatedRounds[currentRound].usedHint = showHint;
+      setRounds(updatedRounds);
+      
+      // Actualizar el contador de pistas si se usó una
+      if (showHint) {
+        setTotalHints(prev => prev + 1);
+      }
+      
+      // Mostrar mensaje de éxito
+      setMessage(`¡Correcto! Has adivinado el país. Ronda ${currentRound + 1}/${TOTAL_ROUNDS} completada.`);
+      
+      // Pasar a la siguiente ronda después de un breve retraso
+      setTimeout(() => {
+        if (currentRound + 1 < TOTAL_ROUNDS) {
+          setCurrentRound(prev => prev + 1);
+          startNewRound();
+        } else {
+          // Todas las rondas completadas
+          finishGame();
+        }
+      }, 1500);
     } else {
       setMessage('Incorrecto. Intenta de nuevo.');
       setAttempts([...attempts, country]);
@@ -131,6 +224,11 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
 
   const showHintHandler = () => {
     setShowHint(true);
+    
+    // Marcar que se usó una pista en esta ronda
+    const updatedRounds = [...rounds];
+    updatedRounds[currentRound].usedHint = true;
+    setRounds(updatedRounds);
   };
 
   // Función para generar una pista más vaga sobre el continente
@@ -145,6 +243,11 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
     <div className="flag-game-container">
       {targetCountry && (
         <div className="flag-container">
+          <div className="round-indicator">
+            <h3>Ronda {currentRound + 1} de {TOTAL_ROUNDS}</h3>
+            <p>Intentos totales: {totalAttempts} | Pistas usadas: {totalHints}</p>
+          </div>
+          
           <img 
             src={getFlagUrl(targetCountry.code, 120)} 
             alt="Bandera para adivinar" 
@@ -211,7 +314,7 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
           
           {attempts.length > 0 && (
             <div className="attempts-container">
-              <h4>Intentos ({attempts.length}):</h4>
+              <h4>Intentos en esta ronda ({attempts.length}):</h4>
               <ul className="attempts-list">
                 {attempts.map((attempt, index) => (
                   <li key={index} className="attempt-item">
@@ -225,6 +328,27 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
                       }}
                     />
                     {attempt.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {rounds.filter(round => round.completed).length > 0 && (
+            <div className="completed-rounds">
+              <h4>Rondas completadas:</h4>
+              <ul className="rounds-list">
+                {rounds.filter(round => round.completed).map((round, index) => (
+                  <li key={index} className="round-item">
+                    <span>Ronda {index + 1}: </span>
+                    <img 
+                      src={getFlagUrl(round.country.code, 16)} 
+                      alt={`Bandera de ${round.country.name}`}
+                      className="country-flag"
+                    />
+                    <span>{round.country.name}</span>
+                    <span> - {round.attempts} intentos</span>
+                    {round.usedHint && <span> (con pista)</span>}
                   </li>
                 ))}
               </ul>

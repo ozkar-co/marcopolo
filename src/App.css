@@ -968,3 +968,82 @@ body.game-page {
   cursor: pointer;
   color: var(--primary-color);
 }
+
+/* Estilos para el juego de banderas por rondas */
+.round-indicator {
+  background-color: rgba(210, 180, 140, 0.3);
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+
+.round-indicator h3 {
+  color: var(--primary-color);
+  margin-bottom: 5px;
+  font-size: 1.2rem;
+}
+
+.round-indicator p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+.completed-rounds {
+  margin-top: 20px;
+  background-color: rgba(255, 250, 240, 0.9);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid var(--border-color);
+}
+
+.completed-rounds h4 {
+  margin-top: 0;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+.rounds-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.round-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  margin-bottom: 5px;
+  background-color: rgba(210, 180, 140, 0.2);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.round-item img {
+  margin: 0 5px;
+}
+
+.round-item span {
+  margin-right: 5px;
+}
+
+/* Ajustes responsivos para el juego de banderas */
+@media (max-width: 768px) {
+  .round-indicator h3 {
+    font-size: 1.1rem;
+  }
+  
+  .round-indicator p {
+    font-size: 0.8rem;
+  }
+  
+  .round-item {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+  }
+}
