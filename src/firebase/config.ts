@@ -1,5 +1,12 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
+
+// Añadir declaración de tipos para import.meta.env
+declare global {
+  interface ImportMeta {
+    env: Record<string, string>;
+  }
+}
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -15,7 +22,15 @@ const firebaseConfig = {
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 
-// Inicializar Firestore
-const db = getFirestore(app);
+// Configuración para solucionar problemas de CORS
+const firestoreSettings = {
+  ignoreUndefinedProperties: true,
+  experimentalForceLongPolling: true, // Usar long polling en lugar de WebSockets
+  useFetchStreams: false // Deshabilitar streams para evitar problemas de CORS
+};
+
+// Inicializar Firestore con opciones para evitar problemas de CORS
+// En lugar de usar getFirestore y luego settings, usamos initializeFirestore directamente
+const db = initializeFirestore(app, firestoreSettings);
 
 export { app, db }; 
