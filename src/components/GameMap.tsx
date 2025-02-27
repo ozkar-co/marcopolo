@@ -1,19 +1,6 @@
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { Icon, LatLngExpression } from 'leaflet';
+import { useEffect, useState, useRef } from 'react';
+import Globe from 'react-globe.gl';
 import { Country, calculateDistance, countries } from '../data/countries';
-
-// Solucionar problema de iconos en React-Leaflet
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-
-let DefaultIcon = new Icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41]
-});
 
 // Función para normalizar texto (eliminar acentos y convertir a minúsculas)
 const normalizeText = (text: string): string => {
@@ -38,6 +25,8 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<Country[]>([]);
   const [error, setError] = useState('');
+  const globeRef = useRef<any>();
+  const [globeWidth, setGlobeWidth] = useState(window.innerWidth * 0.6);
 
   useEffect(() => {
     if (inputValue.length > 1) {
@@ -50,6 +39,32 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
       setSuggestions([]);
     }
   }, [inputValue]);
+
+  // Efecto para inicializar el globo
+  useEffect(() => {
+    if (globeRef.current) {
+      // Configurar la rotación automática
+      globeRef.current.controls().autoRotate = true;
+      globeRef.current.controls().autoRotateSpeed = 0.5;
+      
+      // Configurar la cámara para una mejor visualización
+      globeRef.current.pointOfView({ lat: 20, lng: 0, altitude: 2.5 }, 1000);
+    }
+  }, []);
+
+  // Efecto para ajustar el tamaño del globo cuando cambia el tamaño de la ventana
+  useEffect(() => {
+    const handleResize = () => {
+      setGlobeWidth(window.innerWidth > 1200 ? window.innerWidth * 0.6 : window.innerWidth * 0.9);
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Ajustar tamaño inicial
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   const handleGuess = (country: Country) => {
     // Verificar si ya se ha adivinado este país
@@ -76,68 +91,95 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
     setError('');
   };
 
-  const getCircleColor = (distance: number) => {
+  const getDistanceColor = (distance: number) => {
     if (distance < 500) return 'green';
     if (distance < 1500) return 'yellow';
     if (distance < 3000) return 'orange';
     return 'red';
   };
 
+  // Preparar los marcadores para el globo
+  const markerData = guesses.map(guess => ({
+    lat: guess.country.latitude,
+    lng: guess.country.longitude,
+    color: getDistanceColor(guess.distance),
+    name: guess.country.name,
+    distance: guess.distance
+  }));
+
   return (
     <div className="game-map-container">
-      <div className="input-container">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          placeholder="Escribe el nombre de un país..."
-          className="country-input"
-        />
-        {error && <p className="error-message">{error}</p>}
-        {suggestions.length > 0 && (
-          <ul className="suggestions-list">
-            {suggestions.map(country => (
+      <div className="globe-and-input">
+        <div className="input-container">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            placeholder="Escribe el nombre de un país..."
+            className="country-input"
+          />
+          {error && <p className="error-message">{error}</p>}
+          {suggestions.length > 0 && (
+            <ul className="suggestions-list">
+              {suggestions.map(country => (
+                <li 
+                  key={country.name} 
+                  onClick={() => handleGuess(country)}
+                  className="suggestion-item"
+                >
+                  {country.name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        
+        <div style={{ height: '500px', width: '100%' }}>
+          <Globe
+            ref={globeRef}
+            globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+            backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+            pointsData={markerData}
+            pointColor="color"
+            pointAltitude={0.1}
+            pointRadius={0.5}
+            pointLabel={(d: any) => `${d.name}: ${d.distance} km`}
+            width={globeWidth}
+            height={500}
+            atmosphereColor="rgba(200, 220, 255, 0.4)"
+            showAtmosphere={true}
+          />
+        </div>
+      </div>
+      
+      <div className="guesses-container">
+        <h3>Intentos</h3>
+        {guesses.length === 0 ? (
+          <p>Aún no has realizado ningún intento.</p>
+        ) : (
+          <ul className="guesses-list">
+            {guesses.map((guess, index) => (
               <li 
-                key={country.name} 
-                onClick={() => handleGuess(country)}
-                className="suggestion-item"
+                key={index} 
+                className="guess-item"
+                style={{ borderLeft: `4px solid ${getDistanceColor(guess.distance)}` }}
               >
-                {country.name}
+                <div style={{ fontWeight: 'bold' }}>{guess.country.name}</div>
+                <div>Capital: {guess.country.capital}</div>
+                <div style={{ 
+                  marginTop: '5px', 
+                  color: getDistanceColor(guess.distance) === 'green' ? 'green' : 
+                         getDistanceColor(guess.distance) === 'yellow' ? '#b0b000' : 
+                         getDistanceColor(guess.distance) === 'orange' ? 'orange' : 'red',
+                  fontWeight: 'bold'
+                }}>
+                  Distancia: {guess.distance} km
+                </div>
               </li>
             ))}
           </ul>
         )}
       </div>
-
-      <MapContainer 
-        center={[20, 0]} 
-        zoom={2} 
-        style={{ height: '500px', width: '100%' }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        
-        {guesses.map((guess, index) => {
-          const position: LatLngExpression = [guess.country.latitude, guess.country.longitude];
-          return (
-            <div key={index}>
-              <Marker position={position} icon={DefaultIcon}>
-                <Popup>
-                  {guess.country.name} <br />
-                  Distancia: {guess.distance} km
-                </Popup>
-              </Marker>
-              <Circle 
-                center={position}
-                radius={50000}
-                pathOptions={{ color: getCircleColor(guess.distance), fillColor: getCircleColor(guess.distance) }}
-              />
-            </div>
-          );
-        })}
-      </MapContainer>
     </div>
   );
 };

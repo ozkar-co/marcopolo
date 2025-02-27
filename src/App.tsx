@@ -72,11 +72,6 @@ function App() {
                   guesses={guesses} 
                   addGuess={addGuess} 
                 />
-                
-                <GuessList 
-                  guesses={guesses} 
-                  targetCountry={targetCountry} 
-                />
               </div>
             )}
           </>
