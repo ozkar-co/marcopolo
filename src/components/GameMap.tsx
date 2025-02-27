@@ -31,7 +31,8 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
   const [suggestions, setSuggestions] = useState<Country[]>([]);
   const [error, setError] = useState('');
   const globeRef = useRef<any>();
-  const [globeWidth, setGlobeWidth] = useState(window.innerWidth * 0.6);
+  const [globeWidth, setGlobeWidth] = useState(400);
+  const [globeHeight, setGlobeHeight] = useState(400);
 
   useEffect(() => {
     if (inputValue.length > 1) {
@@ -60,7 +61,9 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
   // Efecto para ajustar el tamaño del globo cuando cambia el tamaño de la ventana
   useEffect(() => {
     const handleResize = () => {
-      setGlobeWidth(window.innerWidth > 1200 ? window.innerWidth * 0.6 : window.innerWidth * 0.9);
+      const containerWidth = window.innerWidth > 900 ? window.innerWidth * 0.4 : window.innerWidth * 0.9;
+      setGlobeWidth(containerWidth);
+      setGlobeHeight(containerWidth); // Hacerlo cuadrado
     };
 
     window.addEventListener('resize', handleResize);
@@ -148,19 +151,19 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
           )}
         </div>
         
-        <div style={{ height: '500px', width: '100%' }}>
+        <div className="globe-container">
           <Globe
             ref={globeRef}
-            globeImageUrl="/earth-blue-marble.jpg"
-            backgroundImageUrl="/night-sky.png"
+            globeImageUrl="/earth-sepia.jpg"
+            backgroundColor="#00000000"
             pointsData={markerData}
             pointColor="color"
             pointAltitude={0.1}
             pointRadius={0.5}
             pointLabel={(d: any) => `${d.name}: ${d.distance} km`}
             width={globeWidth}
-            height={500}
-            atmosphereColor="rgba(200, 220, 255, 0.4)"
+            height={globeHeight}
+            atmosphereColor="rgba(139, 69, 19, 0.2)"
             showAtmosphere={true}
           />
         </div>
@@ -180,27 +183,27 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
                 className="guess-item"
                 style={{ borderLeft: `4px solid ${getDistanceColor(guess.distance)}` }}
               >
-                <div className="guess-header">
-                  <img 
-                    src={getFlagUrl(guess.country.code)} 
-                    alt={`Bandera de ${guess.country.name}`}
-                    className="country-flag"
-                    onError={(e) => {
-                      // Si la imagen falla, usar una imagen de respaldo
-                      (e.target as HTMLImageElement).src = 'https://flagcdn.com/16x12/xx.png';
-                    }}
-                  />
-                  <span style={{ fontWeight: 'bold' }}>{guess.country.name}</span>
-                </div>
-                <div>Capital: {guess.country.capital}</div>
-                <div style={{ 
-                  marginTop: '5px', 
-                  color: getDistanceColor(guess.distance) === 'green' ? 'green' : 
-                         getDistanceColor(guess.distance) === 'yellow' ? '#b0b000' : 
-                         getDistanceColor(guess.distance) === 'orange' ? 'orange' : 'red',
-                  fontWeight: 'bold'
-                }}>
-                  Distancia: {guess.distance} km
+                <div className="guess-line">
+                  <div className="guess-country-info">
+                    <img 
+                      src={getFlagUrl(guess.country.code)} 
+                      alt={`Bandera de ${guess.country.name}`}
+                      className="country-flag"
+                      onError={(e) => {
+                        // Si la imagen falla, usar una imagen de respaldo
+                        (e.target as HTMLImageElement).src = 'https://flagcdn.com/16x12/xx.png';
+                      }}
+                    />
+                    <span className="country-name">{guess.country.name}</span>
+                    <span className="country-capital">({guess.country.capital})</span>
+                  </div>
+                  <div className="guess-distance" style={{ 
+                    color: getDistanceColor(guess.distance) === 'green' ? 'green' : 
+                           getDistanceColor(guess.distance) === 'yellow' ? '#b0b000' : 
+                           getDistanceColor(guess.distance) === 'orange' ? 'orange' : 'red'
+                  }}>
+                    {guess.distance} km
+                  </div>
                 </div>
               </li>
             ))}

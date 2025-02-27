@@ -117,7 +117,8 @@ body.game-page {
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  background-color: rgba(245, 222, 179, 0.7);
+  background-color: rgba(245, 222, 179, 0.85);
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%238b4513' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
 
 .game-info {
@@ -144,12 +145,37 @@ body.game-page {
   margin-top: 20px;
   position: relative;
   z-index: 1;
+  width: 100%;
+  flex-wrap: wrap;
 }
 
 .globe-and-input {
-  flex: 1;
+  flex: 1 1 400px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+.globe-container {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  position: relative;
+}
+
+.globe-container::before {
+  display: none;
+}
+
+.globe-container > div {
+  position: relative;
+  z-index: 1;
 }
 
 .input-container {
@@ -191,6 +217,11 @@ body.game-page {
 .country-name {
   vertical-align: middle;
   color: #5D4037;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: 5px;
 }
 
 .suggestion-item {
@@ -205,24 +236,18 @@ body.game-page {
   background-color: rgba(210, 180, 140, 0.3);
 }
 
-.guess-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
 .guesses-container {
-  width: 300px;
+  flex: 1 1 400px;
   padding: 15px;
   background-color: rgba(255, 250, 240, 0.9);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  max-height: 550px;
+  max-height: 600px;
   overflow-y: auto;
   border: 1px solid #D2B48C;
   position: relative;
   z-index: 1;
+  min-width: 0;
 }
 
 .guesses-container h3 {
@@ -230,20 +255,72 @@ body.game-page {
   border-bottom: 2px solid #D2B48C;
   padding-bottom: 10px;
   color: #5D4037;
+  text-align: center;
 }
 
 .guesses-list {
   list-style: none;
   padding: 0;
+  margin: 0;
+  width: 100%;
 }
 
 .guess-item {
   margin-bottom: 10px;
-  padding: 10px;
+  padding: 10px 15px;
   background-color: rgba(255, 250, 240, 0.9);
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   border: 1px solid #D2B48C;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.guess-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.guess-country-info {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.country-flag {
+  margin-right: 8px;
+  vertical-align: middle;
+  border: 1px solid #D2B48C;
+  flex-shrink: 0;
+}
+
+.country-name {
+  vertical-align: middle;
+  color: #5D4037;
+  font-weight: bold;
+  margin-right: 5px;
+  flex-shrink: 0;
+}
+
+.country-capital {
+  color: #8B4513;
+  font-size: 0.9em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.guess-distance {
+  font-weight: bold;
+  white-space: nowrap;
+  margin-left: 10px;
+  flex-shrink: 0;
 }
 
 .error-message {
@@ -326,11 +403,17 @@ body.game-page {
 @media (max-width: 900px) {
   .game-map-container {
     flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .globe-and-input {
+    width: 100%;
   }
   
   .guesses-container {
     width: 100%;
     margin-top: 20px;
+    max-height: 400px;
   }
 }
 
