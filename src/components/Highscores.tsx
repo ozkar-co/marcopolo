@@ -2,17 +2,13 @@ import { useState, useEffect } from 'react';
 import { getTopHighscores, saveHighscore, Highscore, GameType, WinningCountry } from '../firebase/highscores';
 import { getFlagUrl } from './GameMap';
 
-interface Score {
-  attempts: number;
-  totalDistance: number;
+interface HighscoresProps {
+  gameType: GameType;
+  attempts?: number;
+  totalDistance?: number;
   usedHint?: boolean;
   totalHints?: number;
   winningCountry?: WinningCountry;
-}
-
-interface HighscoresProps {
-  gameType: GameType;
-  currentScore?: Score;
   isGameOver: boolean;
   onClose: () => void;
   playerName?: string;
@@ -21,7 +17,11 @@ interface HighscoresProps {
 
 const Highscores: React.FC<HighscoresProps> = ({ 
   gameType, 
-  currentScore, 
+  attempts, 
+  totalDistance, 
+  usedHint,
+  totalHints,
+  winningCountry,
   isGameOver, 
   onClose, 
   playerName: initialPlayerName,
@@ -64,23 +64,6 @@ const Highscores: React.FC<HighscoresProps> = ({
     }
   }, [initialPlayerName]);
 
-  // Convertir la puntuación al formato numérico para Firestore
-  const getNumericScore = (): number => {
-    if (!currentScore) return 0;
-    
-    // Para el juego de banderas, el score es el número de intentos
-    // y se usa el número de pistas como desempate (menos pistas es mejor)
-    if (gameType === GameType.FLAG) {
-      // Multiplicamos por 1000 para dar prioridad a los intentos
-      // y sumamos el número de pistas para desempatar
-      const hintsUsed = currentScore.totalHints || 0;
-      return currentScore.attempts * 1000 + hintsUsed;
-    }
-    
-    // Para el juego de países, mantenemos la lógica actual
-    return currentScore.attempts;
-  };
-
   // Manejar el envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +73,7 @@ const Highscores: React.FC<HighscoresProps> = ({
       return;
     }
 
-    if (!currentScore) {
+    if (!attempts) {
       setError('No hay puntuación para guardar');
       return;
     }
@@ -101,13 +84,13 @@ const Highscores: React.FC<HighscoresProps> = ({
       // Crear el objeto de puntuación con todos los campos necesarios
       const scoreToSave = {
         playerName: playerName.trim(),
-        score: getNumericScore(),
+        score: attempts, // Usamos directamente el número de intentos como score
         gameType,
-        attempts: currentScore.attempts,
-        totalDistance: currentScore.totalDistance || 0,
-        usedHint: currentScore.usedHint || false,
-        totalHints: currentScore.totalHints || 0,
-        winningCountry: currentScore.winningCountry
+        attempts: attempts,
+        totalDistance: totalDistance || 0,
+        usedHint: usedHint || false,
+        totalHints: totalHints || 0,
+        winningCountry: winningCountry
       };
       
       console.log('Guardando puntuación:', scoreToSave);
@@ -138,7 +121,6 @@ const Highscores: React.FC<HighscoresProps> = ({
 
   // Formatear la puntuación para mostrarla
   const formatScore = (
-    score: number, 
     attempts: number, 
     totalDistance?: number, 
     usedHint?: boolean,
@@ -162,11 +144,11 @@ const Highscores: React.FC<HighscoresProps> = ({
         <p className="error-message">{error}</p>
       ) : (
         <>
-          {isGameOver && currentScore && !isSubmitted && (
+          {isGameOver && attempts && !isSubmitted && (
             <div className="submit-score">
               <h3>Tu puntuación: {gameType === GameType.COUNTRY ? 
-                `${currentScore.attempts} intentos (distancia total: ${currentScore.totalDistance.toFixed(0)} km)` : 
-                `${currentScore.attempts} intentos ${currentScore.totalHints && currentScore.totalHints > 0 ? `(${currentScore.totalHints} pistas)` : '(sin pistas)'}`}
+                `${attempts} intentos (distancia total: ${totalDistance?.toFixed(0) || 0} km)` : 
+                `${attempts} intentos ${totalHints && totalHints > 0 ? `(${totalHints} pistas)` : '(sin pistas)'}`}
               </h3>
               <form onSubmit={handleSubmit}>
                 <input
@@ -208,7 +190,7 @@ const Highscores: React.FC<HighscoresProps> = ({
                     <tr key={index}>
                       <td>{index + 1}</td>
                       <td>{score.playerName}</td>
-                      <td>{formatScore(score.score, score.attempts, score.totalDistance, score.usedHint, score.totalHints)}</td>
+                      <td>{formatScore(score.attempts, score.totalDistance, score.usedHint, score.totalHints)}</td>
                       {gameType === GameType.COUNTRY && (
                         <td className="winning-country">
                           {score.winningCountry ? (

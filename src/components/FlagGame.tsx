@@ -20,7 +20,7 @@ const getFlagUrl = (countryCode: string, height: number = 120): string => {
 };
 
 interface FlagGameProps {
-  onCorrectGuess: (attempts: number, usedHint: boolean) => void;
+  onCorrectGuess: (attempts: number, usedHint: boolean, totalHints: number) => void;
   onNewGame: () => void;
   gameOver: boolean;
   onGameOver: (isCorrect: boolean) => void;
@@ -138,7 +138,7 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
   // Finalizar el juego y enviar la puntuación
   const finishGame = () => {
     // Solo cuando se completan todas las rondas, notificar al componente padre
-    onCorrectGuess(totalAttempts, totalHints > 0);
+    onCorrectGuess(totalAttempts, totalHints > 0, totalHints);
     onGameOver(true);
     setGameOverState(true);
   };
@@ -163,6 +163,19 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
     if (attempts.some(attempt => normalizeText(attempt.name) === normalizedName)) {
       setMessage('Ya has intentado con este país.');
       return;
+    }
+    
+    // Asegurarse de que rounds[currentRound] existe antes de incrementar los intentos
+    if (!rounds[currentRound]) {
+      // Si no existe, inicializarlo
+      const newRounds = [...rounds];
+      newRounds[currentRound] = {
+        country: targetCountry!,
+        attempts: 0,
+        usedHint: showHint,
+        completed: false
+      };
+      setRounds(newRounds);
     }
     
     // Incrementar el número de intentos para la ronda actual

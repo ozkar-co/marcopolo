@@ -25,12 +25,14 @@ interface GameMapProps {
   guesses: Guess[];
   addGuess: (guess: Guess) => void;
   resetGlobe?: boolean; // Nueva prop para indicar cuándo reiniciar el globo
+  gameOver?: boolean; // Nueva prop para indicar si el juego ha terminado
 }
 
-const GameMap = ({ targetCountry, guesses, addGuess, resetGlobe }: GameMapProps) => {
+const GameMap = ({ targetCountry, guesses, addGuess, resetGlobe, gameOver = false }: GameMapProps) => {
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<Country[]>([]);
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [globeReady, setGlobeReady] = useState(false);
   const globeRef = useRef<any>();
   const [globeWidth, setGlobeWidth] = useState(400);
   const [globeHeight, setGlobeHeight] = useState(400);
@@ -40,10 +42,11 @@ const GameMap = ({ targetCountry, guesses, addGuess, resetGlobe }: GameMapProps)
   useEffect(() => {
     if (inputValue.length > 1) {
       const normalizedInput = normalizeText(inputValue);
-      // Filtrar países que coinciden con la entrada y que no han sido adivinados aún
+      // Filtrar países que coinciden con la entrada y que no han sido intentados
+      const attemptedCountryNames = guesses.map(g => normalizeText(g.country.name));
       const filteredCountries = countries.filter(country => 
         normalizeText(country.name).includes(normalizedInput) && 
-        !guesses.some(guess => normalizeText(guess.country.name) === normalizeText(country.name))
+        !attemptedCountryNames.includes(normalizeText(country.name))
       );
       setSuggestions(filteredCountries);
     } else {
@@ -68,8 +71,12 @@ const GameMap = ({ targetCountry, guesses, addGuess, resetGlobe }: GameMapProps)
 
   // Efecto para reiniciar el globo cuando cambia resetGlobe
   useEffect(() => {
-    if (resetGlobe) {
-      resetGlobeView();
+    if (resetGlobe && globeRef.current) {
+      // Reiniciar la posición del globo
+      globeRef.current.pointOfView({ lat: 0, lng: 0, altitude: 2.5 });
+      // Limpiar los marcadores
+      setGlobeReady(false);
+      setTimeout(() => setGlobeReady(true), 100);
     }
   }, [resetGlobe]);
 
@@ -136,13 +143,27 @@ const GameMap = ({ targetCountry, guesses, addGuess, resetGlobe }: GameMapProps)
     }
   }, [guesses]);
 
-  const handleGuess = (country: Country) => {
-    // Verificar si ya se ha adivinado este país
-    if (guesses.some(guess => normalizeText(guess.country.name) === normalizeText(country.name))) {
-      setError('¡Ya has intentado con este país!');
+  // Manejar el cambio en el input
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+    setMessage('');
+  };
+
+  // Manejar la selección de un país
+  const handleCountrySelect = (country: Country) => {
+    if (gameOver) {
+      setMessage('El juego ha terminado. Haz clic en "Volver a jugar" para comenzar de nuevo.');
       return;
     }
 
+    // Verificar si ya se ha intentado con este país
+    const normalizedName = normalizeText(country.name);
+    if (guesses.some(guess => normalizeText(guess.country.name) === normalizedName)) {
+      setMessage('Ya has intentado con este país.');
+      return;
+    }
+
+    // Calcular la distancia al país objetivo
     const distance = calculateDistance(
       country.latitude, 
       country.longitude, 
@@ -150,21 +171,26 @@ const GameMap = ({ targetCountry, guesses, addGuess, resetGlobe }: GameMapProps)
       targetCountry.longitude
     );
 
+    // Añadir el intento
     addGuess({ country, distance });
+    
+    // Limpiar el input y las sugerencias
     setInputValue('');
     setSuggestions([]);
-    setError('');
+    
+    // Mostrar mensaje según la distancia
+    if (distance === 0) {
+      setMessage('¡Correcto! Has encontrado el país.');
+    } else {
+      setMessage(`Incorrecto. Distancia al país objetivo: ${distance.toFixed(0)} km.`);
+    }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-    setError('');
-  };
-
+  // Manejar la tecla Enter en el input
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && suggestions.length > 0) {
       // Seleccionar la primera sugerencia al presionar Enter
-      handleGuess(suggestions[0]);
+      handleCountrySelect(suggestions[0]);
     }
   };
 
@@ -193,16 +219,22 @@ const GameMap = ({ targetCountry, guesses, addGuess, resetGlobe }: GameMapProps)
             value={inputValue}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Escribe el nombre de un país..."
+            placeholder="Escribe el nombre del país..."
             className="country-input"
+            disabled={gameOver}
           />
-          {error && <p className="error-message">{error}</p>}
-          {suggestions.length > 0 && (
+          
+          {message && <p className={message.includes('Correcto') ? 'success-message' : 'error-message'}>{message}</p>}
+          
+          {suggestions.length > 0 && !gameOver && (
             <ul className="suggestions-list">
               {suggestions.map(country => (
                 <li 
                   key={country.name} 
-                  onClick={() => handleGuess(country)}
+                  onClick={() => {
+                    setInputValue(country.name);
+                    handleCountrySelect(country);
+                  }}
                   className="suggestion-item"
                 >
                   <img 
@@ -240,37 +272,31 @@ const GameMap = ({ targetCountry, guesses, addGuess, resetGlobe }: GameMapProps)
       </div>
       
       <div className="guesses-container">
-        <h3>Intentos</h3>
-        {guesses.length === 0 ? (
-          <p>Aún no has realizado ningún intento.</p>
-        ) : (
-          <ul className="guesses-list">
-            {[...guesses]
-              .sort((a, b) => a.distance - b.distance) // Ordenar por distancia (menor primero)
-              .map((guess, index) => (
-              <li key={index} className="guess-item">
-                <div className="guess-line">
-                  <div className="guess-country-info">
-                    <img 
-                      src={getFlagUrl(guess.country.code)} 
-                      alt={`Bandera de ${guess.country.name}`}
-                      className="country-flag"
-                      onError={(e) => {
-                        // Si la imagen falla, usar una imagen de respaldo
-                        (e.target as HTMLImageElement).src = 'https://flagcdn.com/16x12/xx.png';
-                      }}
-                    />
-                    <span className="country-name">{guess.country.name}</span>
-                    <span className="country-capital">({guess.country.capital})</span>
-                  </div>
-                  <span className="guess-distance" style={{ color: getDistanceColor(guess.distance) }}>
-                    {guess.distance === 0 ? '¡Correcto!' : `${guess.distance.toFixed(0)} km`}
-                  </span>
+        <h3>Intentos ({guesses.length})</h3>
+        <ul className="guesses-list">
+          {guesses.sort((a, b) => a.distance - b.distance).map((guess, index) => (
+            <li key={index} className="guess-item">
+              <div className="guess-line">
+                <div className="guess-country-info">
+                  <img 
+                    src={getFlagUrl(guess.country.code)} 
+                    alt={`Bandera de ${guess.country.name}`}
+                    className="country-flag"
+                    onError={(e) => {
+                      // Si la imagen falla, usar una imagen de respaldo
+                      (e.target as HTMLImageElement).src = 'https://flagcdn.com/16x12/xx.png';
+                    }}
+                  />
+                  <span className="country-name">{guess.country.name}</span>
+                  <span className="country-capital">({guess.country.capital})</span>
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                <span className="guess-distance" style={{ color: guess.distance === 0 ? '#4CAF50' : '#FFC107' }}>
+                  {guess.distance === 0 ? '¡Correcto!' : `${guess.distance.toFixed(0)} km`}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

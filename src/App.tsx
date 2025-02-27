@@ -11,15 +11,6 @@ interface Guess {
   distance: number;
 }
 
-// Interfaz para el sistema de puntuación
-interface Score {
-  attempts: number;
-  totalDistance: number;
-  usedHint?: boolean;
-  totalHints?: number; // Nuevo campo para el total de pistas usadas
-  winningCountry?: WinningCountry;
-}
-
 enum GameType {
   COUNTRY = 'country',
   FLAG = 'flag'
@@ -40,7 +31,11 @@ function App() {
   const [currentPage, setCurrentPage] = useState<PageType>(PageType.HOME);
   const [showModal, setShowModal] = useState(false);
   const [showHighscores, setShowHighscores] = useState(false);
-  const [score, setScore] = useState<Score>({ attempts: 0, totalDistance: 0 });
+  const [attempts, setAttempts] = useState(0);
+  const [totalDistance, setTotalDistance] = useState(0);
+  const [usedHint, setUsedHint] = useState(false);
+  const [totalHints, setTotalHints] = useState(0);
+  const [winningCountry, setWinningCountry] = useState<WinningCountry | undefined>(undefined);
   const [playerName, setPlayerName] = useState('');
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [resetGlobe, setResetGlobe] = useState(false);
@@ -79,23 +74,17 @@ function App() {
   const addGuess = (guess: Guess) => {
     setGuesses(prev => [...prev, guess]);
     
-    // Actualizar la puntuación con el nuevo intento y distancia
-    setScore(prevScore => ({
-      ...prevScore,
-      attempts: prevScore.attempts + 1,
-      totalDistance: prevScore.totalDistance + guess.distance
-    }));
+    // Actualizar los intentos y la distancia total
+    setAttempts(prev => prev + 1);
+    setTotalDistance(prev => prev + guess.distance);
     
     // Verificar si el usuario ha adivinado correctamente
     if (guess.distance === 0 && targetCountry) {
       // Guardar el país ganador
-      setScore(prevScore => ({
-        ...prevScore,
-        winningCountry: {
-          name: targetCountry.name,
-          code: targetCountry.code
-        }
-      }));
+      setWinningCountry({
+        name: targetCountry.name,
+        code: targetCountry.code
+      });
       setGameOver(true);
     }
   };
@@ -114,31 +103,36 @@ function App() {
     setGameType(type);
     setCurrentPage(PageType.GAME);
     setShowModal(false);
-    setScore({ attempts: 0, totalDistance: 0 });
+    setAttempts(0);
+    setTotalDistance(0);
+    setUsedHint(false);
+    setTotalHints(0);
+    setWinningCountry(undefined);
     setPlayerName('');
     setScoreSubmitted(false);
-    setFlagGameCompleted(false); // Reiniciar el estado de juego de banderas completado
+    setFlagGameCompleted(false);
   };
 
-  const handleCorrectFlagGuess = (attempts: number, usedHint: boolean) => {
+  const handleCorrectFlagGuess = (attemptsCount: number, hintUsed: boolean, hintsCount: number) => {
     // Esta función ahora solo se llama cuando se completan todas las rondas
-    setScore({
-      attempts,
-      totalDistance: 0,
-      usedHint,
-      totalHints: usedHint ? 1 : 0
-    });
+    setAttempts(attemptsCount);
+    setUsedHint(hintUsed);
+    setTotalHints(hintsCount);
     setGameOver(true);
-    setFlagGameCompleted(true); // Marcar que se han completado todas las rondas
+    setFlagGameCompleted(true);
   };
 
   const handleNewFlagGame = () => {
     setGameOver(false);
     setShowModal(false);
-    setScore({ attempts: 0, totalDistance: 0 });
+    setAttempts(0);
+    setTotalDistance(0);
+    setUsedHint(false);
+    setTotalHints(0);
+    setWinningCountry(undefined);
     setPlayerName('');
     setScoreSubmitted(false);
-    setFlagGameCompleted(false); // Reiniciar el estado de juego de banderas completado
+    setFlagGameCompleted(false);
   };
 
   const goToHomePage = () => {
@@ -147,7 +141,7 @@ function App() {
     setCurrentPage(PageType.HOME);
     setShowModal(false);
     setScoreSubmitted(false);
-    setFlagGameCompleted(false); // Reiniciar el estado de juego de banderas completado
+    setFlagGameCompleted(false);
   };
 
   const goToAboutPage = () => {
@@ -179,18 +173,16 @@ function App() {
   const saveScore = async () => {
     if (playerName.trim() && !scoreSubmitted) {
       try {
-        // Ya no calculamos puntos numéricos, usamos directamente el número de intentos
-        
         // Guardar la puntuación directamente
         await saveHighscore({
           playerName: playerName.trim(),
-          score: score.attempts, // Usamos directamente el número de intentos
+          score: attempts, // Usamos directamente el número de intentos como score
           gameType: gameType === GameType.COUNTRY ? FirebaseGameType.COUNTRY : FirebaseGameType.FLAG,
-          attempts: score.attempts,
-          totalDistance: score.totalDistance || 0,
-          usedHint: score.usedHint || false,
-          totalHints: score.totalHints || 0,
-          winningCountry: score.winningCountry
+          attempts: attempts,
+          totalDistance: totalDistance || 0,
+          usedHint: usedHint || false,
+          totalHints: totalHints || 0,
+          winningCountry: winningCountry
         });
         
         // Marcar como enviada
@@ -288,6 +280,7 @@ function App() {
                 guesses={guesses} 
                 addGuess={addGuess}
                 resetGlobe={resetGlobe}
+                gameOver={gameOver}
               />
             )}
 
@@ -329,12 +322,12 @@ function App() {
               {gameType === GameType.COUNTRY ? (
                 <>
                   <p>Has encontrado el país correcto.</p>
-                  <p>Tu puntuación: {score.attempts} intentos (distancia total: {score.totalDistance.toFixed(0)} km)</p>
+                  <p>Tu puntuación: {attempts} intentos (distancia total: {totalDistance.toFixed(0)} km)</p>
                 </>
               ) : (
                 <>
                   <p>Has completado las 10 rondas del juego de banderas.</p>
-                  <p>Tu puntuación: {score.attempts} intentos totales {score.totalHints && score.totalHints > 0 ? `(${score.totalHints} pistas usadas)` : '(sin pistas)'}</p>
+                  <p>Tu puntuación: {attempts} intentos totales {totalHints > 0 ? `(${totalHints} pistas usadas)` : '(sin pistas)'}</p>
                 </>
               )}
               
@@ -378,7 +371,11 @@ function App() {
               <button className="highscores-modal-close" onClick={toggleHighscores}>×</button>
               <Highscores 
                 gameType={gameType === GameType.COUNTRY ? FirebaseGameType.COUNTRY : FirebaseGameType.FLAG}
-                currentScore={gameOver ? score : undefined}
+                attempts={attempts}
+                totalDistance={totalDistance}
+                usedHint={usedHint}
+                totalHints={totalHints}
+                winningCountry={winningCountry}
                 isGameOver={gameOver}
                 onClose={toggleHighscores}
                 playerName={playerName}
