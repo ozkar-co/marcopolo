@@ -8,9 +8,32 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""/>
+    
+    <!-- PWA: Manifest y meta tags -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="description" content="Juegos geográficos para aprender sobre países y banderas del mundo" />
+    
+    <!-- PWA: Apple specific tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MarcoPolo" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    
+    <!-- PWA: Microsoft specific tags -->
+    <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
+    <meta name="msapplication-TileColor" content="#1a1a2e" />
+    
+    <!-- PWA: Registrar Service Worker -->
+    <script src="/register-sw.js" defer></script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA: Botón de instalación (oculto por defecto) -->
+    <button id="install-button" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 10px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+      Instalar App
+    </button>
   </body>
 </html>

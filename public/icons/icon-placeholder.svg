@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#1a1a2e" rx="100" ry="100" />
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#e94560" stroke-width="20" />
+  <path d="M256 56 L256 456" stroke="#e94560" stroke-width="10" />
+  <path d="M56 256 L456 256" stroke="#e94560" stroke-width="10" />
+  <circle cx="256" cy="256" r="50" fill="#e94560" />
+  <text x="256" y="350" font-family="Arial" font-size="60" fill="white" text-anchor="middle">MarcoPolo</text>
+</svg> 
