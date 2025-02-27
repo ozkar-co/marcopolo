@@ -167,6 +167,9 @@ body.game-page {
   align-items: center;
   margin-top: 20px;
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .globe-container::before {
@@ -176,6 +179,12 @@ body.game-page {
 .globe-container > div {
   position: relative;
   z-index: 1;
+  max-width: 100%;
+}
+
+.globe-container canvas {
+  max-width: 100%;
+  height: auto !important;
 }
 
 .input-container {

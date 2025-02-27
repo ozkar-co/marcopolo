@@ -33,6 +33,8 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
   const globeRef = useRef<any>();
   const [globeWidth, setGlobeWidth] = useState(400);
   const [globeHeight, setGlobeHeight] = useState(400);
+  const [userInteracted, setUserInteracted] = useState(false);
+  const globeContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (inputValue.length > 1) {
@@ -55,19 +57,47 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
       
       // Configurar la cámara para una mejor visualización
       globeRef.current.pointOfView({ lat: 20, lng: 0, altitude: 2.5 }, 1000);
+
+      // Añadir evento para detectar interacción del usuario
+      const controls = globeRef.current.controls();
+      controls.addEventListener('start', handleUserInteraction);
     }
+
+    return () => {
+      if (globeRef.current) {
+        const controls = globeRef.current.controls();
+        controls.removeEventListener('start', handleUserInteraction);
+      }
+    };
   }, []);
+
+  // Función para manejar la interacción del usuario
+  const handleUserInteraction = () => {
+    if (!userInteracted && globeRef.current) {
+      setUserInteracted(true);
+      globeRef.current.controls().autoRotate = false;
+    }
+  };
 
   // Efecto para ajustar el tamaño del globo cuando cambia el tamaño de la ventana
   useEffect(() => {
+    const updateGlobeSize = () => {
+      if (globeContainerRef.current) {
+        const containerWidth = globeContainerRef.current.clientWidth;
+        // Asegurar que el globo no sea más grande que su contenedor
+        const size = Math.min(containerWidth, window.innerHeight * 0.5);
+        setGlobeWidth(size);
+        setGlobeHeight(size);
+      }
+    };
+
+    updateGlobeSize(); // Ajustar tamaño inicial
+    
     const handleResize = () => {
-      const containerWidth = window.innerWidth > 900 ? window.innerWidth * 0.4 : window.innerWidth * 0.9;
-      setGlobeWidth(containerWidth);
-      setGlobeHeight(containerWidth); // Hacerlo cuadrado
+      updateGlobeSize();
     };
 
     window.addEventListener('resize', handleResize);
-    handleResize(); // Ajustar tamaño inicial
 
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -151,7 +181,7 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
           )}
         </div>
         
-        <div className="globe-container">
+        <div className="globe-container" ref={globeContainerRef}>
           <Globe
             ref={globeRef}
             globeImageUrl="/earth-sepia.jpg"
