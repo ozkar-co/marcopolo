@@ -20,7 +20,7 @@ const getFlagUrl = (countryCode: string, height: number = 120): string => {
 };
 
 interface FlagGameProps {
-  onCorrectGuess: () => void;
+  onCorrectGuess: (attempts: number, usedHint: boolean) => void;
   onNewGame: () => void;
   gameOver: boolean;
   onGameOver: (isCorrect: boolean) => void;
@@ -47,18 +47,21 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
     }
   }, [gameOver]);
 
-  // Filtrar sugerencias basadas en el input
+  // Filtrar sugerencias basadas en el input y excluir países ya intentados
   useEffect(() => {
     if (inputValue.length > 1) {
       const normalizedInput = normalizeText(inputValue);
+      // Filtrar países que coinciden con la entrada y que no han sido intentados
+      const attemptedCountryNames = attempts.map(a => normalizeText(a.name));
       const filteredCountries = countries.filter(country => 
-        normalizeText(country.name).includes(normalizedInput)
+        normalizeText(country.name).includes(normalizedInput) && 
+        !attemptedCountryNames.includes(normalizeText(country.name))
       );
       setSuggestions(filteredCountries);
     } else {
       setSuggestions([]);
     }
-  }, [inputValue]);
+  }, [inputValue, attempts]);
 
   const startNewGame = () => {
     const randomIndex = Math.floor(Math.random() * countries.length);
@@ -98,6 +101,8 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
       setMessage('¡Correcto! Has adivinado el país.');
       setGameOverState(true);
       onGameOver(true);
+      // Pasar el número de intentos y si se usó pista al componente padre
+      onCorrectGuess(attempts.length + 1, showHint);
     } else {
       setMessage('Incorrecto. Intenta de nuevo.');
       setAttempts([...attempts, country]);
@@ -126,6 +131,14 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
 
   const showHintHandler = () => {
     setShowHint(true);
+  };
+
+  // Función para generar una pista más vaga sobre el continente
+  const getVagueHint = (country: Country): string => {
+    const continent = getContinent(country);
+    const vagueContinent = `${continent} o sus alrededores`;
+    
+    return `Podría estar en ${vagueContinent}, pero estoy seguro que su capital es ${country.capital}.`;
   };
 
   return (
@@ -182,7 +195,7 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
             
             {showHint && (
               <div className="hint-container">
-                <p>Pista: El país está en {getContinent(targetCountry)} y su capital es {targetCountry.capital}.</p>
+                <p>{getVagueHint(targetCountry)}</p>
               </div>
             )}
             

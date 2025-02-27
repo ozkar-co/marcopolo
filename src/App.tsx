@@ -3,10 +3,19 @@ import './App.css'
 import GameMap from './components/GameMap'
 import FlagGame from './components/FlagGame'
 import { Country, getRandomCountry } from './data/countries'
+import Highscores from './components/Highscores'
+import { GameType as FirebaseGameType, saveHighscore } from './firebase/highscores'
 
 interface Guess {
   country: Country;
   distance: number;
+}
+
+// Interfaz para el sistema de puntuación
+interface Score {
+  attempts: number;
+  totalDistance: number;
+  usedHint?: boolean;
 }
 
 enum GameType {
@@ -28,6 +37,10 @@ function App() {
   const [gameType, setGameType] = useState<GameType | null>(null);
   const [currentPage, setCurrentPage] = useState<PageType>(PageType.HOME);
   const [showModal, setShowModal] = useState(false);
+  const [showHighscores, setShowHighscores] = useState(false);
+  const [score, setScore] = useState<Score>({ attempts: 0, totalDistance: 0 });
+  const [playerName, setPlayerName] = useState('');
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
   // Efecto para cambiar la clase del body según el estado del juego
   useEffect(() => {
@@ -61,6 +74,13 @@ function App() {
   const addGuess = (guess: Guess) => {
     setGuesses(prev => [...prev, guess]);
     
+    // Actualizar la puntuación con el nuevo intento y distancia
+    setScore(prevScore => ({
+      ...prevScore,
+      attempts: prevScore.attempts + 1,
+      totalDistance: prevScore.totalDistance + guess.distance
+    }));
+    
     // Verificar si el usuario ha adivinado correctamente
     if (guess.distance === 0) {
       setGameOver(true);
@@ -77,15 +97,32 @@ function App() {
     setGameType(type);
     setCurrentPage(PageType.GAME);
     setShowModal(false);
+    setScore({ attempts: 0, totalDistance: 0 });
+    setPlayerName('');
+    setScoreSubmitted(false);
   };
 
-  const handleCorrectFlagGuess = () => {
+  const handleCorrectFlagGuess = (attempts: number, usedHint: boolean) => {
+    // Actualizar la puntuación para el juego de banderas
+    setScore({
+      attempts,
+      totalDistance: 0,
+      usedHint
+    });
     setGameOver(true);
+  };
+
+  // Función para incrementar el número de intentos en el juego de banderas
+  const incrementAttempts = () => {
+    // Ya no necesitamos este estado separado, se maneja en FlagGame
   };
 
   const handleNewFlagGame = () => {
     setGameOver(false);
     setShowModal(false);
+    setScore({ attempts: 0, totalDistance: 0 });
+    setPlayerName('');
+    setScoreSubmitted(false);
   };
 
   const goToHomePage = () => {
@@ -93,6 +130,7 @@ function App() {
     setGameType(null);
     setCurrentPage(PageType.HOME);
     setShowModal(false);
+    setScoreSubmitted(false);
   };
 
   const goToAboutPage = () => {
@@ -107,6 +145,56 @@ function App() {
       handleNewFlagGame();
     }
     setShowModal(false);
+    setScoreSubmitted(false);
+  };
+
+  // Función para mostrar los highscores
+  const toggleHighscores = () => {
+    setShowHighscores(!showHighscores);
+  };
+
+  // Manejar el cambio en el nombre del jugador
+  const handlePlayerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPlayerName(e.target.value);
+  };
+
+  // Guardar la puntuación
+  const saveScore = async () => {
+    if (playerName.trim() && !scoreSubmitted) {
+      try {
+        // Calcular la puntuación numérica
+        let numericScore = 0;
+        
+        if (gameType === GameType.COUNTRY) {
+          const baseScore = 1000 - (score.attempts * 100);
+          const distanceDeduction = Math.min(99, Math.floor(score.totalDistance / 1000));
+          numericScore = Math.max(1, baseScore - distanceDeduction);
+        } else {
+          const baseScore = 1000 - (score.attempts * 100);
+          const hintPenalty = score.usedHint ? 50 : 0;
+          numericScore = Math.max(1, baseScore - hintPenalty);
+        }
+        
+        // Guardar la puntuación directamente
+        await saveHighscore({
+          playerName: playerName.trim(),
+          score: numericScore,
+          gameType: gameType === GameType.COUNTRY ? FirebaseGameType.COUNTRY : FirebaseGameType.FLAG,
+          attempts: score.attempts,
+          totalDistance: score.totalDistance || 0,
+          usedHint: score.usedHint || false
+        });
+        
+        // Marcar como enviada
+        setScoreSubmitted(true);
+        
+        // Cerrar el modal de victoria y mostrar las puntuaciones
+        setShowModal(false);
+        setShowHighscores(true);
+      } catch (error) {
+        console.error('Error al guardar la puntuación:', error);
+      }
+    }
   };
 
   return (
@@ -202,6 +290,12 @@ function App() {
                 onGameOver={setGameOver}
               />
             )}
+
+            <div className="game-controls">
+              <button className="highscores-button" onClick={toggleHighscores}>
+                Ver Puntuaciones
+              </button>
+            </div>
           </div>
         )}
 
@@ -212,7 +306,32 @@ function App() {
               <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
               <h2>¡Felicidades!</h2>
               <p>Has ganado el juego.</p>
+              
+              {gameType === GameType.COUNTRY ? (
+                <p>Tu puntuación: {score.attempts} intentos (distancia total: {score.totalDistance.toFixed(0)} km)</p>
+              ) : (
+                <p>Tu puntuación: {score.attempts} intentos {score.usedHint ? '(con pista)' : '(sin pista)'}</p>
+              )}
+              
+              <div className="player-name-input">
+                <label htmlFor="playerName">Tu nombre:</label>
+                <input 
+                  type="text" 
+                  id="playerName" 
+                  value={playerName} 
+                  onChange={handlePlayerNameChange} 
+                  placeholder="Introduce tu nombre"
+                />
+              </div>
+              
               <div className="modal-buttons">
+                <button 
+                  className="modal-button" 
+                  onClick={saveScore}
+                  disabled={!playerName.trim()}
+                >
+                  Guardar puntuación
+                </button>
                 <button 
                   className="modal-button" 
                   onClick={restartCurrentGame}
@@ -223,6 +342,23 @@ function App() {
                   Volver al menú
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de highscores */}
+        {showHighscores && (
+          <div className="highscores-modal">
+            <div className="highscores-modal-content">
+              <button className="highscores-modal-close" onClick={toggleHighscores}>×</button>
+              <Highscores 
+                gameType={gameType === GameType.COUNTRY ? FirebaseGameType.COUNTRY : FirebaseGameType.FLAG}
+                currentScore={gameOver ? score : undefined}
+                isGameOver={gameOver}
+                onClose={toggleHighscores}
+                playerName={playerName}
+                scoreSubmitted={scoreSubmitted}
+              />
             </div>
           </div>
         )}
