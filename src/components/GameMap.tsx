@@ -39,14 +39,16 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
   useEffect(() => {
     if (inputValue.length > 1) {
       const normalizedInput = normalizeText(inputValue);
+      // Filtrar países que coinciden con la entrada y que no han sido adivinados aún
       const filteredCountries = countries.filter(country => 
-        normalizeText(country.name).includes(normalizedInput)
+        normalizeText(country.name).includes(normalizedInput) && 
+        !guesses.some(guess => normalizeText(guess.country.name) === normalizeText(country.name))
       );
       setSuggestions(filteredCountries);
     } else {
       setSuggestions([]);
     }
-  }, [inputValue]);
+  }, [inputValue, guesses]);
 
   // Efecto para inicializar el globo
   useEffect(() => {
@@ -129,6 +131,13 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
     setError('');
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && suggestions.length > 0) {
+      // Seleccionar la primera sugerencia al presionar Enter
+      handleGuess(suggestions[0]);
+    }
+  };
+
   const getDistanceColor = (distance: number) => {
     if (distance < 500) return 'green';
     if (distance < 1500) return 'yellow';
@@ -153,6 +162,7 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
             type="text"
             value={inputValue}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             placeholder="Escribe el nombre de un país..."
             className="country-input"
           />

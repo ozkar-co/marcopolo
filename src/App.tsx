@@ -76,6 +76,7 @@ function App() {
     setGameStarted(true);
     setGameType(type);
     setCurrentPage(PageType.GAME);
+    setShowModal(false);
   };
 
   const handleCorrectFlagGuess = () => {
@@ -98,22 +99,31 @@ function App() {
     setCurrentPage(PageType.ABOUT);
   };
 
+  // Función para reiniciar el juego actual
+  const restartCurrentGame = () => {
+    if (gameType === GameType.COUNTRY) {
+      startNewGame(GameType.COUNTRY);
+    } else {
+      handleNewFlagGame();
+    }
+    setShowModal(false);
+  };
+
   return (
     <div className="app-container">
       <header className="main-header">
         <div className="header-content">
           <h1>Marco Polo</h1>
-          {currentPage !== PageType.HOME && (
+          {currentPage !== PageType.HOME ? (
             <button className="back-button" onClick={goToHomePage}>
               Volver
             </button>
+          ) : (
+            <p className="header-subtitle">
+              "Explorando el mundo, descubriendo maravillas y aventuras inimaginables en cada rincón del planeta."
+            </p>
           )}
         </div>
-        {currentPage === PageType.HOME && (
-          <p className="header-subtitle">
-            "Explorando el mundo, descubriendo maravillas y aventuras inimaginables en cada rincón del planeta."
-          </p>
-        )}
       </header>
 
       <main className="main-content">
@@ -162,7 +172,7 @@ function App() {
                 de la historia, cuyo espíritu aventurero y curiosidad insaciable nos inspira cada día.
               </p>
               <p>
-                Este proyecto fue inspirado por Alejandro Sánchez y construido con pasión por 
+                Este proyecto fue inspirado por <strong>Alejandro Sánchez</strong> y construido con pasión por 
                 <a href="https://ozcodx.github.io" target="_blank" rel="noopener noreferrer"> Oz</a>. 
                 Somos dos primos que compartimos el amor por los viajes, los puzzles y los retos geográficos.
               </p>
@@ -189,6 +199,7 @@ function App() {
                 onCorrectGuess={handleCorrectFlagGuess}
                 onNewGame={handleNewFlagGame}
                 gameOver={gameOver}
+                onGameOver={setGameOver}
               />
             )}
           </div>
@@ -204,13 +215,7 @@ function App() {
               <div className="modal-buttons">
                 <button 
                   className="modal-button" 
-                  onClick={() => {
-                    if (gameType === GameType.COUNTRY) {
-                      startNewGame(GameType.COUNTRY);
-                    } else {
-                      handleNewFlagGame();
-                    }
-                  }}
+                  onClick={restartCurrentGame}
                 >
                   Jugar de nuevo
                 </button>

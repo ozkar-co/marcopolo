@@ -18,20 +18,29 @@ interface FlagGameProps {
   onCorrectGuess: () => void;
   onNewGame: () => void;
   gameOver: boolean;
+  onGameOver: (isCorrect: boolean) => void;
 }
 
-const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver }) => {
+const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver, onGameOver }) => {
   const [targetCountry, setTargetCountry] = useState<Country | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<Country[]>([]);
-  const [attempts, setAttempts] = useState<string[]>([]);
+  const [attempts, setAttempts] = useState<Country[]>([]);
   const [message, setMessage] = useState('');
   const [showHint, setShowHint] = useState(false);
+  const [gameOverState, setGameOverState] = useState(gameOver);
 
   // Inicializar el juego
   useEffect(() => {
     startNewGame();
   }, []);
+
+  // Reiniciar el juego cuando cambia gameOver de true a false
+  useEffect(() => {
+    if (gameOver === false && targetCountry !== null) {
+      startNewGame();
+    }
+  }, [gameOver]);
 
   // Filtrar sugerencias basadas en el input
   useEffect(() => {
@@ -54,6 +63,7 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
     setAttempts([]);
     setMessage('');
     setShowHint(false);
+    setGameOverState(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,28 +71,52 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
     setMessage('');
   };
 
-  const handleGuess = (country: Country) => {
-    if (gameOver) return;
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && suggestions.length > 0) {
+      // Seleccionar la primera sugerencia al presionar Enter
+      const selectedCountry = suggestions[0];
+      setInputValue(selectedCountry.name);
+      handleGuessWithCountry(selectedCountry);
+    }
+  };
 
+  const handleGuessWithCountry = (country: Country) => {
     // Verificar si ya se ha intentado con este país
-    if (attempts.includes(country.name)) {
-      setMessage('¡Ya has intentado con este país!');
+    const normalizedName = normalizeText(country.name);
+    if (attempts.some(attempt => normalizeText(attempt.name) === normalizedName)) {
+      setMessage('Ya has intentado con este país.');
       return;
     }
-
-    // Añadir a la lista de intentos
-    setAttempts(prev => [...prev, country.name]);
     
-    // Verificar si es correcto
+    // Verificar si es el país correcto
     if (targetCountry && normalizeText(country.name) === normalizeText(targetCountry.name)) {
-      setMessage(`¡Correcto! La bandera pertenece a ${targetCountry.name}`);
-      onCorrectGuess();
+      setMessage('¡Correcto! Has adivinado el país.');
+      setGameOverState(true);
+      onGameOver(true);
     } else {
-      setMessage(`Incorrecto. Sigue intentando.`);
+      setMessage('Incorrecto. Intenta de nuevo.');
+      setAttempts([...attempts, country]);
+      setInputValue('');
+      setSuggestions([]);
     }
+  };
 
-    setInputValue('');
-    setSuggestions([]);
+  const handleGuess = () => {
+    if (inputValue.trim() === '') return;
+    
+    // Buscar el país que coincide con la entrada del usuario
+    const normalizedInput = normalizeText(inputValue);
+    const guessedCountry = countries.find(country => 
+      normalizeText(country.name) === normalizedInput
+    );
+    
+    // Verificar si el país existe
+    if (!guessedCountry) {
+      setMessage('País no encontrado. Intenta con otro nombre.');
+      return;
+    }
+    
+    handleGuessWithCountry(guessedCountry);
   };
 
   const showHintHandler = () => {
@@ -108,19 +142,23 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
               type="text"
               value={inputValue}
               onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
               placeholder="Escribe el nombre del país..."
               className="country-input"
-              disabled={gameOver}
+              disabled={gameOverState}
             />
             
             {message && <p className={message.includes('Correcto') ? 'success-message' : 'error-message'}>{message}</p>}
             
-            {suggestions.length > 0 && !gameOver && (
+            {suggestions.length > 0 && !gameOverState && (
               <ul className="suggestions-list">
                 {suggestions.map(country => (
                   <li 
                     key={country.name} 
-                    onClick={() => handleGuess(country)}
+                    onClick={() => {
+                      setInputValue(country.name);
+                      handleGuessWithCountry(country);
+                    }}
                     className="suggestion-item"
                   >
                     <span className="country-name">{country.name}</span>
@@ -131,7 +169,7 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
           </div>
           
           <div className="flag-game-controls">
-            {!gameOver && attempts.length >= 3 && !showHint && (
+            {!gameOverState && attempts.length >= 3 && !showHint && (
               <button className="hint-button" onClick={showHintHandler}>
                 Mostrar pista
               </button>
@@ -143,7 +181,7 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
               </div>
             )}
             
-            {gameOver && (
+            {gameOverState && (
               <button className="new-game-button" onClick={() => {
                 startNewGame();
                 onNewGame();
@@ -159,7 +197,16 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
               <ul className="attempts-list">
                 {attempts.map((attempt, index) => (
                   <li key={index} className="attempt-item">
-                    {attempt}
+                    <img 
+                      src={getFlagUrl(attempt.code, 16)} 
+                      alt={`Bandera de ${attempt.name}`}
+                      className="country-flag"
+                      onError={(e) => {
+                        // Si la imagen falla, usar una imagen de respaldo
+                        (e.target as HTMLImageElement).src = 'https://flagcdn.com/16x12/xx.png';
+                      }}
+                    />
+                    {attempt.name}
                   </li>
                 ))}
               </ul>
@@ -185,4 +232,4 @@ const getContinent = (country: Country): string => {
   return "desconocido";
 };
 
-export default FlagGame; 
+export default FlagGame;
