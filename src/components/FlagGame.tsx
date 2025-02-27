@@ -42,6 +42,7 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
   const [message, setMessage] = useState('');
   const [showHint, setShowHint] = useState(false);
   const [gameOverState, setGameOverState] = useState(gameOver);
+  const [isProcessingSelection, setIsProcessingSelection] = useState(false);
   
   // Estado para el sistema de rondas
   const [rounds, setRounds] = useState<Round[]>([]);
@@ -148,22 +149,43 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
     setMessage('');
   };
 
+  // Modificar el manejo de la tecla Enter para que funcione con una sola pulsación
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && suggestions.length > 0) {
+    if (e.key === 'Enter' && suggestions.length > 0 && !isProcessingSelection) {
       e.preventDefault(); // Prevenir comportamiento por defecto
-      // Seleccionar la primera sugerencia al presionar Enter
-      handleGuessWithCountry(suggestions[0]);
-      // Limpiar el input y las sugerencias inmediatamente
+      
+      // Marcar que estamos procesando una selección
+      setIsProcessingSelection(true);
+      
+      // Capturar la primera sugerencia
+      const selectedCountry = suggestions[0];
+      
+      // Limpiar el input y las sugerencias
       setInputValue('');
       setSuggestions([]);
+      
+      // Procesar la selección
+      handleGuessWithCountry(selectedCountry);
+      
+      // Desmarcar el procesamiento después de un breve retraso
+      setTimeout(() => {
+        setIsProcessingSelection(false);
+      }, 100);
     }
   };
 
   const handleGuessWithCountry = (country: Country) => {
+    // Evitar procesamiento si ya estamos procesando una selección
+    if (isProcessingSelection) return;
+    
+    // Marcar que estamos procesando una selección
+    setIsProcessingSelection(true);
+    
     // Verificar si ya se ha intentado con este país
     const normalizedName = normalizeText(country.name);
     if (attempts.some(attempt => normalizeText(attempt.name) === normalizedName)) {
       setMessage('Ya has intentado con este país.');
+      setIsProcessingSelection(false);
       return;
     }
     
@@ -217,6 +239,11 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
       setInputValue('');
       setSuggestions([]);
     }
+    
+    // Desmarcar el procesamiento al final
+    setTimeout(() => {
+      setIsProcessingSelection(false);
+    }, 100);
   };
 
   const handleGuess = () => {
@@ -293,10 +320,22 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
                   <li 
                     key={country.name} 
                     onClick={() => {
-                      handleGuessWithCountry(country);
-                      // Limpiar el input y las sugerencias inmediatamente
-                      setInputValue('');
-                      setSuggestions([]);
+                      if (!isProcessingSelection) {
+                        // Marcar que estamos procesando una selección
+                        setIsProcessingSelection(true);
+                        
+                        // Limpiar el input y las sugerencias
+                        setInputValue('');
+                        setSuggestions([]);
+                        
+                        // Procesar la selección
+                        handleGuessWithCountry(country);
+                        
+                        // Desmarcar el procesamiento después de un breve retraso
+                        setTimeout(() => {
+                          setIsProcessingSelection(false);
+                        }, 100);
+                      }
                     }}
                     className="suggestion-item"
                   >
