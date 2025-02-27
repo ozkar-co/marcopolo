@@ -178,11 +178,12 @@ const GameMap = ({ targetCountry, guesses, addGuess, resetGlobe, gameOver = fals
     setInputValue('');
     setSuggestions([]);
     
-    // Mostrar mensaje según la distancia
+    // Mostrar mensaje solo si es correcto
     if (distance === 0) {
       setMessage('¡Correcto! Has encontrado el país.');
     } else {
-      setMessage(`Incorrecto. Distancia al país objetivo: ${distance.toFixed(0)} km.`);
+      // No mostrar mensaje para intentos incorrectos
+      setMessage('');
     }
   };
 
@@ -224,7 +225,7 @@ const GameMap = ({ targetCountry, guesses, addGuess, resetGlobe, gameOver = fals
             disabled={gameOver}
           />
           
-          {message && <p className={message.includes('Correcto') ? 'success-message' : 'error-message'}>{message}</p>}
+          {message && message !== '' && <p className={message.includes('Correcto') ? 'success-message' : 'error-message'}>{message}</p>}
           
           {suggestions.length > 0 && !gameOver && (
             <ul className="suggestions-list">
