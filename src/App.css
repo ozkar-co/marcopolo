@@ -41,20 +41,50 @@ body.game-page {
   padding: 20px;
   min-height: 100vh;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-.app-header {
-  text-align: center;
+/* Nuevo header principal */
+.main-header {
+  padding: 20px 0;
   margin-bottom: 30px;
   position: relative;
   z-index: 2;
 }
 
-.app-header h1 {
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.main-header h1 {
   color: var(--primary-color);
-  margin-bottom: 20px;
-  font-size: 2.5rem;
-  text-shadow: 1px 1px 2px rgba(139, 69, 19, 0.3);
+  font-size: 3.5rem;
+  text-shadow: 2px 2px 4px rgba(139, 69, 19, 0.4);
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.header-subtitle {
+  color: var(--text-color);
+  font-size: 1.2rem;
+  font-style: italic;
+  text-align: center;
+  margin-top: 10px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Pantalla de inicio con fondo de navegante */
@@ -68,20 +98,8 @@ body.game-page {
   position: relative;
   overflow: hidden;
   background-color: rgba(245, 222, 179, 0.7);
-}
-
-.start-screen h2, 
-.start-screen p, 
-.start-screen .game-selection {
-  position: relative;
-  z-index: 2;
-}
-
-.start-screen h2 {
-  color: var(--primary-color);
-  margin-bottom: 20px;
-  font-size: 2.2rem;
-  text-shadow: 1px 1px 2px rgba(139, 69, 19, 0.5);
+  display: flex;
+  flex-direction: column;
 }
 
 .start-screen p {
@@ -89,9 +107,10 @@ body.game-page {
   font-size: 1.1rem;
   color: #5D4037;
   font-weight: 500;
+  text-align: center;
 }
 
-.start-button, .new-game-button {
+.start-button, .new-game-button, .about-button {
   background-color: var(--secondary-color);
   color: white;
   border: none;
@@ -100,12 +119,22 @@ body.game-page {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
-  margin-top: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.start-button:hover, .new-game-button:hover {
+.start-button:hover, .new-game-button:hover, .about-button:hover {
   background-color: #8B4513;
+}
+
+.about-section {
+  margin-top: auto;
+  text-align: center;
+  padding-top: 20px;
+}
+
+.about-button {
+  background-color: rgba(139, 69, 19, 0.7);
+  font-size: 1rem;
 }
 
 /* Contenedor del juego con fondo de mapa */
@@ -386,46 +415,6 @@ body.game-page {
   margin-bottom: 10px;
 }
 
-@media (max-width: 768px) {
-  .app-container {
-    padding: 10px;
-  }
-  
-  .app-header h1 {
-    font-size: 2rem;
-  }
-  
-  .start-screen, .game-info, .game-map-container, .guess-list-container {
-    padding: 15px;
-  }
-  
-  .country-input {
-    padding: 10px;
-  }
-  
-  .guess-table th, .guess-table td {
-    padding: 8px;
-    font-size: 0.9rem;
-  }
-}
-
-@media (max-width: 900px) {
-  .game-map-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .globe-and-input {
-    width: 100%;
-  }
-  
-  .guesses-container {
-    width: 100%;
-    margin-top: 20px;
-    max-height: 400px;
-  }
-}
-
 /* Estilos para el juego de banderas */
 .flag-game-container {
   display: flex;
@@ -544,6 +533,9 @@ body.game-page {
   transition: transform 0.3s, box-shadow 0.3s;
   cursor: pointer;
   border: 1px solid #D2B48C;
+  display: flex;
+  flex-direction: column;
+  height: 250px;
 }
 
 .game-option:hover {
@@ -559,6 +551,12 @@ body.game-page {
 .game-option p {
   margin-bottom: 20px;
   color: #5D4037;
+  flex-grow: 1;
+}
+
+.game-option .start-button {
+  margin-top: auto;
+  align-self: center;
 }
 
 .back-button {
@@ -570,7 +568,6 @@ body.game-page {
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.3s;
-  margin-left: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -578,8 +575,143 @@ body.game-page {
   background-color: #654321;
 }
 
+/* Modal de victoria */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: rgba(255, 250, 240, 0.95);
+  border-radius: 10px;
+  padding: 30px;
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border: 2px solid var(--border-color);
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary-color);
+}
+
+.modal-content h2 {
+  color: var(--primary-color);
+  margin-bottom: 15px;
+  font-size: 2rem;
+}
+
+.modal-content p {
+  margin-bottom: 25px;
+  font-size: 1.2rem;
+  color: var(--text-color);
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.modal-button {
+  padding: 10px 20px;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.modal-button:hover {
+  background-color: var(--primary-color);
+}
+
+/* Página de historia */
+.about-screen {
+  background-color: rgba(255, 250, 240, 0.9);
+  border-radius: 10px;
+  padding: 30px;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.about-screen h2 {
+  color: var(--primary-color);
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 2rem;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.about-content {
+  line-height: 1.8;
+}
+
+.about-content p {
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+}
+
+.about-content a {
+  color: var(--secondary-color);
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+
+.about-content a:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
 /* Ajustes responsivos */
 @media (max-width: 768px) {
+  .app-container {
+    padding: 10px;
+  }
+  
+  .main-header h1 {
+    font-size: 2.5rem;
+  }
+  
+  .header-subtitle {
+    font-size: 1rem;
+  }
+  
+  .start-screen, .about-screen, .game-container {
+    padding: 15px;
+  }
+  
+  .country-input {
+    padding: 10px;
+  }
+  
+  .guess-table th, .guess-table td {
+    padding: 8px;
+    font-size: 0.9rem;
+  }
+  
   .game-selection {
     flex-direction: column;
     align-items: center;
@@ -588,5 +720,27 @@ body.game-page {
   .game-option {
     width: 100%;
     max-width: 300px;
+  }
+  
+  .modal-content {
+    padding: 20px;
+    width: 95%;
+  }
+}
+
+@media (max-width: 900px) {
+  .game-map-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .globe-and-input {
+    width: 100%;
+  }
+  
+  .guesses-container {
+    width: 100%;
+    margin-top: 20px;
+    max-height: 400px;
   }
 }
