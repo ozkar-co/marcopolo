@@ -21,6 +21,22 @@ function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameType, setGameType] = useState<GameType | null>(null);
 
+  // Efecto para cambiar la clase del body según el estado del juego
+  useEffect(() => {
+    const bodyElement = document.body;
+    
+    if (!gameStarted) {
+      bodyElement.className = 'home-page';
+    } else {
+      bodyElement.className = 'game-page';
+    }
+    
+    // Limpieza al desmontar
+    return () => {
+      bodyElement.className = '';
+    };
+  }, [gameStarted]);
+
   useEffect(() => {
     if (gameStarted && !targetCountry && gameType === GameType.COUNTRY) {
       setTargetCountry(getRandomCountry());

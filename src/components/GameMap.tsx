@@ -151,8 +151,8 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
         <div style={{ height: '500px', width: '100%' }}>
           <Globe
             ref={globeRef}
-            globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-            backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+            globeImageUrl="/earth-blue-marble.jpg"
+            backgroundImageUrl="/night-sky.png"
             pointsData={markerData}
             pointColor="color"
             pointAltitude={0.1}
