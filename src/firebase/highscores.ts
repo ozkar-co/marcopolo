@@ -7,6 +7,12 @@ export enum GameType {
   FLAG = 'flag'
 }
 
+// Interfaz para el país ganador (versión simplificada de Country)
+export interface WinningCountry {
+  name: string;
+  code: string;
+}
+
 // Interfaz para los highscores
 export interface Highscore {
   playerName: string;
@@ -16,6 +22,7 @@ export interface Highscore {
   attempts: number;
   totalDistance?: number;
   usedHint?: boolean;
+  winningCountry?: WinningCountry; // País con el que se ganó
 }
 
 // Colección de highscores
@@ -31,7 +38,9 @@ export const saveHighscore = async (highscore: Omit<Highscore, 'date'>): Promise
       // Asegurarse de que estos campos existan
       attempts: highscore.attempts || 0,
       totalDistance: highscore.totalDistance || 0,
-      usedHint: highscore.usedHint || false
+      usedHint: highscore.usedHint || false,
+      // El país ganador es opcional
+      winningCountry: highscore.winningCountry || null
     };
     
     console.log('Guardando highscore:', highscoreToSave);
@@ -46,10 +55,11 @@ export const saveHighscore = async (highscore: Omit<Highscore, 'date'>): Promise
 // Función para obtener los mejores highscores por tipo de juego
 export const getTopHighscores = async (gameType: GameType, limit_count: number = 10): Promise<Highscore[]> => {
   try {
-    const q = query(
+    // Crear la consulta base con el filtro por tipo de juego
+    let q = query(
       highscoresCollection,
       where("gameType", "==", gameType),
-      orderBy('score', 'desc'),
+      orderBy('attempts', 'asc'), // Ordenar por intentos ascendente (menos es mejor)
       limit(limit_count)
     );
     
@@ -65,9 +75,22 @@ export const getTopHighscores = async (gameType: GameType, limit_count: number =
         date: data.date.toDate(),
         attempts: data.attempts || 0,
         totalDistance: data.totalDistance || 0,
-        usedHint: data.usedHint || false
+        usedHint: data.usedHint || false,
+        winningCountry: data.winningCountry || undefined
       });
     });
+    
+    // Para el juego de países, ordenamos adicionalmente por distancia total para desempatar
+    if (gameType === GameType.COUNTRY) {
+      highscores.sort((a, b) => {
+        // Primero ordenar por intentos
+        if (a.attempts !== b.attempts) {
+          return a.attempts - b.attempts;
+        }
+        // Si hay empate en intentos, ordenar por distancia total
+        return (a.totalDistance || 0) - (b.totalDistance || 0);
+      });
+    }
     
     return highscores;
   } catch (error) {

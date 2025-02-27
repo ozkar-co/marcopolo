@@ -156,10 +156,11 @@ body.game-page {
 .game-controls {
   display: flex;
   justify-content: center;
+  gap: 15px;
   margin-top: 20px;
 }
 
-.highscores-button {
+.highscores-button, .new-game-button {
   background-color: var(--secondary-color);
   color: white;
   border: none;
@@ -167,12 +168,22 @@ body.game-page {
   font-size: 1.1rem;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.highscores-button:hover {
+.highscores-button:hover, .new-game-button:hover {
   background-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.new-game-button {
+  background-color: #2E8B57; /* Verde para diferenciar */
+}
+
+.new-game-button:hover {
+  background-color: #1e6e3c;
 }
 
 .game-info {
@@ -728,6 +739,29 @@ body.game-page {
 .about-content a:hover {
   color: var(--primary-color);
   text-decoration: underline;
+}
+
+/* Estilos para el país ganador en la tabla de puntuaciones */
+.winning-country {
+  min-width: 120px;
+}
+
+.country-flag-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.country-flag-name img {
+  width: 16px;
+  height: 12px;
+  border: 1px solid #D2B48C;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.country-flag-name span {
+  font-size: 0.9rem;
+  color: var(--text-color);
 }
 
 /* Ajustes responsivos */

@@ -11,7 +11,7 @@ const normalizeText = (text: string): string => {
 };
 
 // Función para obtener la URL de la bandera
-const getFlagUrl = (countryCode: string): string => {
+export const getFlagUrl = (countryCode: string): string => {
   return `https://flagcdn.com/16x12/${countryCode.toLowerCase()}.png`;
 };
 
@@ -24,9 +24,10 @@ interface GameMapProps {
   targetCountry: Country;
   guesses: Guess[];
   addGuess: (guess: Guess) => void;
+  resetGlobe?: boolean; // Nueva prop para indicar cuándo reiniciar el globo
 }
 
-const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
+const GameMap = ({ targetCountry, guesses, addGuess, resetGlobe }: GameMapProps) => {
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<Country[]>([]);
   const [error, setError] = useState('');
@@ -49,6 +50,28 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
       setSuggestions([]);
     }
   }, [inputValue, guesses]);
+
+  // Función para reiniciar el globo
+  const resetGlobeView = () => {
+    if (globeRef.current) {
+      // Reiniciar la rotación automática
+      globeRef.current.controls().autoRotate = true;
+      globeRef.current.controls().autoRotateSpeed = 0.5;
+      
+      // Reiniciar la posición y zoom de la cámara
+      globeRef.current.pointOfView({ lat: 20, lng: 0, altitude: 2.5 }, 1000);
+      
+      // Reiniciar el estado de interacción del usuario
+      setUserInteracted(false);
+    }
+  };
+
+  // Efecto para reiniciar el globo cuando cambia resetGlobe
+  useEffect(() => {
+    if (resetGlobe) {
+      resetGlobeView();
+    }
+  }, [resetGlobe]);
 
   // Efecto para inicializar el globo
   useEffect(() => {
@@ -105,6 +128,13 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  // Efecto para reiniciar el globo cuando cambian los guesses (si no hay guesses, es un nuevo juego)
+  useEffect(() => {
+    if (guesses.length === 0) {
+      resetGlobeView();
+    }
+  }, [guesses]);
 
   const handleGuess = (country: Country) => {
     // Verificar si ya se ha adivinado este país
@@ -215,14 +245,8 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
           <p>Aún no has realizado ningún intento.</p>
         ) : (
           <ul className="guesses-list">
-            {[...guesses]
-              .sort((a, b) => a.distance - b.distance) // Ordenar por distancia (menor a mayor)
-              .map((guess, index) => (
-              <li 
-                key={index} 
-                className="guess-item"
-                style={{ borderLeft: `4px solid ${getDistanceColor(guess.distance)}` }}
-              >
+            {guesses.map((guess, index) => (
+              <li key={index} className="guess-item">
                 <div className="guess-line">
                   <div className="guess-country-info">
                     <img 
@@ -237,13 +261,9 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
                     <span className="country-name">{guess.country.name}</span>
                     <span className="country-capital">({guess.country.capital})</span>
                   </div>
-                  <div className="guess-distance" style={{ 
-                    color: getDistanceColor(guess.distance) === 'green' ? 'green' : 
-                           getDistanceColor(guess.distance) === 'yellow' ? '#b0b000' : 
-                           getDistanceColor(guess.distance) === 'orange' ? 'orange' : 'red'
-                  }}>
-                    {guess.distance} km
-                  </div>
+                  <span className="guess-distance" style={{ color: getDistanceColor(guess.distance) }}>
+                    {guess.distance === 0 ? '¡Correcto!' : `${guess.distance.toFixed(0)} km`}
+                  </span>
                 </div>
               </li>
             ))}

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { getTopHighscores, saveHighscore, Highscore, GameType } from '../firebase/highscores';
+import { getTopHighscores, saveHighscore, Highscore, GameType, WinningCountry } from '../firebase/highscores';
+import { getFlagUrl } from './GameMap';
 
 interface Score {
   attempts: number;
   totalDistance: number;
   usedHint?: boolean;
+  winningCountry?: WinningCountry;
 }
 
 interface HighscoresProps {
@@ -65,24 +67,9 @@ const Highscores: React.FC<HighscoresProps> = ({
   const getNumericScore = (): number => {
     if (!currentScore) return 0;
     
-    // Para el juego de países: menor número de intentos es mejor, y menor distancia total para desempate
-    if (gameType === GameType.COUNTRY) {
-      // Invertir la puntuación para que menos intentos sea mejor
-      // Usar 1000 como base y restar los intentos * 100
-      // Luego restar la distancia total normalizada para desempates
-      const baseScore = 1000 - (currentScore.attempts * 100);
-      const distanceDeduction = Math.min(99, Math.floor(currentScore.totalDistance / 1000));
-      return Math.max(1, baseScore - distanceDeduction);
-    } 
-    // Para el juego de banderas: menor número de intentos es mejor, y no usar pista es mejor
-    else {
-      // Invertir la puntuación para que menos intentos sea mejor
-      // Usar 1000 como base y restar los intentos * 100
-      // Restar 50 puntos adicionales si se usó pista
-      const baseScore = 1000 - (currentScore.attempts * 100);
-      const hintPenalty = currentScore.usedHint ? 50 : 0;
-      return Math.max(1, baseScore - hintPenalty);
-    }
+    // Ya no calculamos puntos, solo devolvemos el número de intentos
+    // para que se guarde en el campo score de Firestore
+    return currentScore.attempts;
   };
 
   // Manejar el envío del formulario
@@ -105,11 +92,12 @@ const Highscores: React.FC<HighscoresProps> = ({
       // Crear el objeto de puntuación con todos los campos necesarios
       const scoreToSave = {
         playerName: playerName.trim(),
-        score: getNumericScore(),
+        score: getNumericScore(), // Ahora score es simplemente el número de intentos
         gameType,
         attempts: currentScore.attempts,
         totalDistance: currentScore.totalDistance || 0,
-        usedHint: currentScore.usedHint || false
+        usedHint: currentScore.usedHint || false,
+        winningCountry: currentScore.winningCountry
       };
       
       console.log('Guardando puntuación:', scoreToSave);
@@ -139,25 +127,16 @@ const Highscores: React.FC<HighscoresProps> = ({
   };
 
   // Formatear la puntuación para mostrarla
-  const formatScore = (score: number, attempts?: number, totalDistance?: number, usedHint?: boolean): string => {
-    // Si tenemos los datos directos, usarlos
-    if (attempts !== undefined) {
-      if (gameType === GameType.COUNTRY && totalDistance !== undefined) {
-        return `${attempts} intentos (${totalDistance.toFixed(0)} km)`;
-      } else if (gameType === GameType.FLAG) {
-        return `${attempts} intentos ${usedHint ? '(con pista)' : '(sin pista)'}`;
-      }
-    }
-    
-    // Fallback al cálculo inverso si no tenemos los datos directos
+  const formatScore = (
+    score: number, 
+    attempts: number, 
+    totalDistance?: number, 
+    usedHint?: boolean
+  ): string => {
     if (gameType === GameType.COUNTRY) {
-      const calculatedAttempts = Math.floor((1000 - score) / 100);
-      const distanceDeduction = score % 100;
-      return `${calculatedAttempts} intentos (${distanceDeduction} km)`;
+      return `${attempts} intentos (${totalDistance?.toFixed(0) || 0} km)`;
     } else {
-      const calculatedAttempts = Math.floor((1000 - score) / 100);
-      const calculatedUsedHint = (score % 100) < 50;
-      return `${calculatedAttempts} intentos ${calculatedUsedHint ? '(con pista)' : '(sin pista)'}`;
+      return `${attempts} intentos${usedHint ? ' (con pista)' : ' (sin pista)'}`;
     }
   };
 
@@ -202,14 +181,15 @@ const Highscores: React.FC<HighscoresProps> = ({
                 <tr>
                   <th>Posición</th>
                   <th>Jugador</th>
-                  <th>Puntuación</th>
+                  <th>Intentos</th>
+                  {gameType === GameType.COUNTRY && <th>País</th>}
                   <th>Fecha</th>
                 </tr>
               </thead>
               <tbody>
                 {highscores.length === 0 ? (
                   <tr>
-                    <td colSpan={4}>No hay puntuaciones registradas</td>
+                    <td colSpan={gameType === GameType.COUNTRY ? 5 : 4}>No hay puntuaciones registradas</td>
                   </tr>
                 ) : (
                   highscores.map((score, index) => (
@@ -217,6 +197,26 @@ const Highscores: React.FC<HighscoresProps> = ({
                       <td>{index + 1}</td>
                       <td>{score.playerName}</td>
                       <td>{formatScore(score.score, score.attempts, score.totalDistance, score.usedHint)}</td>
+                      {gameType === GameType.COUNTRY && (
+                        <td className="winning-country">
+                          {score.winningCountry ? (
+                            <div className="country-flag-name">
+                              <img 
+                                src={getFlagUrl(score.winningCountry.code)} 
+                                alt={`Bandera de ${score.winningCountry.name}`}
+                                className="country-flag"
+                                onError={(e) => {
+                                  // Si la imagen falla, usar una imagen de respaldo
+                                  (e.target as HTMLImageElement).src = 'https://flagcdn.com/16x12/xx.png';
+                                }}
+                              />
+                              <span>{score.winningCountry.name}</span>
+                            </div>
+                          ) : (
+                            <span>-</span>
+                          )}
+                        </td>
+                      )}
                       <td>{formatDate(score.date)}</td>
                     </tr>
                   ))

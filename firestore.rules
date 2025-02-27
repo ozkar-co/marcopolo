@@ -9,9 +9,16 @@ service cloud.firestore {
                    && request.resource.data.playerName.size() <= 50
                    && request.resource.data.score is number
                    && request.resource.data.score >= 0
-                   && request.resource.data.score <= 1000
+                   && request.resource.data.score <= 100
                    && request.resource.data.gameType in ['country', 'flag']
-                   && request.resource.data.date is timestamp;
+                   && request.resource.data.date is timestamp
+                   && (
+                     !('winningCountry' in request.resource.data) 
+                     || (
+                       request.resource.data.winningCountry.name is string
+                       && request.resource.data.winningCountry.code is string
+                     )
+                   );
     }
   }
 } 

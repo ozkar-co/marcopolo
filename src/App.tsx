@@ -4,7 +4,7 @@ import GameMap from './components/GameMap'
 import FlagGame from './components/FlagGame'
 import { Country, getRandomCountry } from './data/countries'
 import Highscores from './components/Highscores'
-import { GameType as FirebaseGameType, saveHighscore } from './firebase/highscores'
+import { GameType as FirebaseGameType, saveHighscore, WinningCountry } from './firebase/highscores'
 
 interface Guess {
   country: Country;
@@ -16,6 +16,7 @@ interface Score {
   attempts: number;
   totalDistance: number;
   usedHint?: boolean;
+  winningCountry?: WinningCountry;
 }
 
 enum GameType {
@@ -41,6 +42,7 @@ function App() {
   const [score, setScore] = useState<Score>({ attempts: 0, totalDistance: 0 });
   const [playerName, setPlayerName] = useState('');
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  const [resetGlobe, setResetGlobe] = useState(false);
 
   // Efecto para cambiar la clase del body según el estado del juego
   useEffect(() => {
@@ -82,7 +84,15 @@ function App() {
     }));
     
     // Verificar si el usuario ha adivinado correctamente
-    if (guess.distance === 0) {
+    if (guess.distance === 0 && targetCountry) {
+      // Guardar el país ganador
+      setScore(prevScore => ({
+        ...prevScore,
+        winningCountry: {
+          name: targetCountry.name,
+          code: targetCountry.code
+        }
+      }));
       setGameOver(true);
     }
   };
@@ -91,6 +101,10 @@ function App() {
     if (type === GameType.COUNTRY) {
       setTargetCountry(getRandomCountry());
       setGuesses([]);
+      // Activar el reinicio del globo
+      setResetGlobe(true);
+      // Desactivar después de un breve tiempo para permitir futuros reinicios
+      setTimeout(() => setResetGlobe(false), 100);
     }
     setGameOver(false);
     setGameStarted(true);
@@ -162,27 +176,17 @@ function App() {
   const saveScore = async () => {
     if (playerName.trim() && !scoreSubmitted) {
       try {
-        // Calcular la puntuación numérica
-        let numericScore = 0;
-        
-        if (gameType === GameType.COUNTRY) {
-          const baseScore = 1000 - (score.attempts * 100);
-          const distanceDeduction = Math.min(99, Math.floor(score.totalDistance / 1000));
-          numericScore = Math.max(1, baseScore - distanceDeduction);
-        } else {
-          const baseScore = 1000 - (score.attempts * 100);
-          const hintPenalty = score.usedHint ? 50 : 0;
-          numericScore = Math.max(1, baseScore - hintPenalty);
-        }
+        // Ya no calculamos puntos numéricos, usamos directamente el número de intentos
         
         // Guardar la puntuación directamente
         await saveHighscore({
           playerName: playerName.trim(),
-          score: numericScore,
+          score: score.attempts, // Usamos directamente el número de intentos
           gameType: gameType === GameType.COUNTRY ? FirebaseGameType.COUNTRY : FirebaseGameType.FLAG,
           attempts: score.attempts,
           totalDistance: score.totalDistance || 0,
-          usedHint: score.usedHint || false
+          usedHint: score.usedHint || false,
+          winningCountry: score.winningCountry
         });
         
         // Marcar como enviada
@@ -278,7 +282,8 @@ function App() {
               <GameMap 
                 targetCountry={targetCountry} 
                 guesses={guesses} 
-                addGuess={addGuess} 
+                addGuess={addGuess}
+                resetGlobe={resetGlobe}
               />
             )}
 
@@ -295,6 +300,12 @@ function App() {
               <button className="highscores-button" onClick={toggleHighscores}>
                 Ver Puntuaciones
               </button>
+              
+              {gameOver && (
+                <button className="new-game-button" onClick={restartCurrentGame}>
+                  Volver a jugar
+                </button>
+              )}
             </div>
           </div>
         )}
