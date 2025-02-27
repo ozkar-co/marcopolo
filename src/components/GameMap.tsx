@@ -172,7 +172,9 @@ const GameMap = ({ targetCountry, guesses, addGuess }: GameMapProps) => {
           <p>Aún no has realizado ningún intento.</p>
         ) : (
           <ul className="guesses-list">
-            {guesses.map((guess, index) => (
+            {[...guesses]
+              .sort((a, b) => a.distance - b.distance) // Ordenar por distancia (menor a mayor)
+              .map((guess, index) => (
               <li 
                 key={index} 
                 className="guess-item"
