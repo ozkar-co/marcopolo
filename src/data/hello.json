@@ -1,0 +1,526 @@
+[{
+    "language": "English",
+    "hello": "Welcome!",
+    "tag": "en"
+  },
+  {
+    "language": "Afrikaans",
+    "hello": "hallo",
+    "tag": "af"
+  },
+  {
+    "language": "Albanian",
+    "hello": "Përshëndetje",
+    "tag": "sq"
+  },
+  {
+    "language": "Amharic",
+    "hello": "ሰላም",
+    "tag": "am"
+  },
+  {
+    "language": "Arabic",
+    "hello": "مرحبا",
+    "tag": "ar"
+  },
+  {
+    "language": "Armenian",
+    "hello": "Բարեւ",
+    "tag": "hy"
+  },
+  {
+    "language": "Azerbaijani",
+    "hello": "Salam",
+    "tag": "az"
+  },
+  {
+    "language": "Basque",
+    "hello": "Kaixo",
+    "tag": "eu"
+  },
+  {
+    "language": "Belarusian",
+    "hello": "добры дзень",
+    "tag": "be"
+  },
+  {
+    "language": "Bengali",
+    "hello": "হ্যালো",
+    "tag": "bn"
+  },
+  {
+    "language": "Bosnian",
+    "hello": "zdravo",
+    "tag": "bs"
+  },
+  {
+    "language": "Bulgarian",
+    "hello": "Здравейте",
+    "tag": "bg"
+  },
+  {
+    "language": "Catalan",
+    "hello": "Hola",
+    "tag": "ca"
+  },
+  {
+    "language": "Cebuano",
+    "hello": "Hello",
+    "tag": "ceb"
+  },
+  {
+    "language": "Chichewa",
+    "hello": "Moni",
+    "tag": "ny"
+  },
+  {
+    "language": "Chinese (Simplified)",
+    "hello": "您好",
+    "tag": "zh-Hans"
+  },
+  {
+    "language": "Chinese (Traditional)",
+    "hello": "您好",
+    "tag": "zh-Hant"
+  },
+  {
+    "language": "Corsican",
+    "hello": "Bonghjornu",
+    "tag": "co"
+  },
+  {
+    "language": "Croatian",
+    "hello": "zdravo",
+    "tag": "hr"
+  },
+  {
+    "language": "Czech",
+    "hello": "Ahoj",
+    "tag": "cs"
+  },
+  {
+    "language": "Danish",
+    "hello": "Hej",
+    "tag": "da"
+  },
+  {
+    "language": "Dutch",
+    "hello": "Hallo",
+    "tag": "nl"
+  },
+  {
+    "language": "English",
+    "hello": "Hello",
+    "tag": "en"
+  },
+  {
+    "language": "Esperanto",
+    "hello": "Saluton",
+    "tag": "eo"
+  },
+  {
+    "language": "Estonian",
+    "hello": "Tere",
+    "tag": "et"
+  },
+  {
+    "language": "Filipino",
+    "hello": "Kumusta",
+    "tag": "fil"
+  },
+  {
+    "language": "Finnish",
+    "hello": "Hei",
+    "tag": "fi"
+  },
+  {
+    "language": "French",
+    "hello": "Bonjour",
+    "tag": "fr"
+  },
+  {
+    "language": "Frisian",
+    "hello": "Hello",
+    "tag": "fy"
+  },
+  {
+    "language": "Galician",
+    "hello": "Ola",
+    "tag": "gl"
+  },
+  {
+    "language": "Georgian",
+    "hello": "გამარჯობა",
+    "tag": "ka"
+  },
+  {
+    "language": "German",
+    "hello": "Hallo",
+    "tag": "de"
+  },
+  {
+    "language": "Greek",
+    "hello": "Γεια σας",
+    "tag": "el"
+  },
+  {
+    "language": "Gujarati",
+    "hello": "હેલો",
+    "tag": "gu"
+  },
+  {
+    "language": "Haitian Creole",
+    "hello": "Bonjou",
+    "tag": "ht"
+  },
+  {
+    "language": "Hausa",
+    "hello": "Sannu",
+    "tag": "ha"
+  },
+  {
+    "language": "Hawaiian",
+    "hello": "Alohaʻoe",
+    "tag": "haw"
+  },
+  {
+    "language": "Hebrew",
+    "hello": "שלום",
+    "tag": "he"
+  },
+  {
+    "language": "Hindi",
+    "hello": "नमस्ते",
+    "tag": "hi"
+  },
+  {
+    "language": "Hmong",
+    "hello": "Nyob zoo",
+    "tag": "hmn"
+  },
+  {
+    "language": "Hungarian",
+    "hello": "Helló",
+    "tag": "hu"
+  },
+  {
+    "language": "Icelandic",
+    "hello": "Halló",
+    "tag": "is"
+  },
+  {
+    "language": "Igbo",
+    "hello": "Ndewo",
+    "tag": "ig"
+  },
+  {
+    "language": "Indonesian",
+    "hello": "Halo",
+    "tag": "id"
+  },
+  {
+    "language": "Irish",
+    "hello": "Dia duit",
+    "tag": "ga"
+  },
+  {
+    "language": "Italian",
+    "hello": "Ciao",
+    "tag": "it"
+  },
+  {
+    "language": "Japanese",
+    "hello": "こんにちは",
+    "tag": "ja"
+  },
+  {
+    "language": "Javanese",
+    "hello": "Hello",
+    "tag": "jv"
+  },
+  {
+    "language": "Kannada",
+    "hello": "ಹಲೋ",
+    "tag": "kn"
+  },
+  {
+    "language": "Kazakh",
+    "hello": "Сәлем",
+    "tag": "kk"
+  },
+  {
+    "language": "Khmer",
+    "hello": "ជំរាបសួរ",
+    "tag": "km"
+  },
+  {
+    "language": "Korean",
+    "hello": "안녕하세요.",
+    "tag": "ko"
+  },
+  {
+    "language": "Kurdish (Kurmanji)",
+    "hello": "Hello",
+    "tag": "ku"
+  },
+  {
+    "language": "Kyrgyz",
+    "hello": "салам",
+    "tag": "ky"
+  },
+  {
+    "language": "Lao",
+    "hello": "ສະບາຍດີ",
+    "tag": "lo"
+  },
+  {
+    "language": "Latin",
+    "hello": "salve",
+    "tag": "la"
+  },
+  {
+    "language": "Latvian",
+    "hello": "Labdien!",
+    "tag": "lv"
+  },
+  {
+    "language": "Lithuanian",
+    "hello": "Sveiki",
+    "tag": "lt"
+  },
+  {
+    "language": "Luxembourgish",
+    "hello": "Moien",
+    "tag": "lb"
+  },
+  {
+    "language": "Macedonian",
+    "hello": "Здраво",
+    "tag": "mk"
+  },
+  {
+    "language": "Malagasy",
+    "hello": "Hello",
+    "tag": "mg"
+  },
+  {
+    "language": "Malay",
+    "hello": "Hello",
+    "tag": "ms"
+  },
+  {
+    "language": "Malayalam",
+    "hello": "ഹലോ",
+    "tag": "ml"
+  },
+  {
+    "language": "Maltese",
+    "hello": "Hello",
+    "tag": "mt"
+  },
+  {
+    "language": "Maori",
+    "hello": "Hiha",
+    "tag": "mi"
+  },
+  {
+    "language": "Marathi",
+    "hello": "हॅलो",
+    "tag": "mr"
+  },
+  {
+    "language": "Mongolian",
+    "hello": "Сайн байна уу",
+    "tag": "mn"
+  },
+  {
+    "language": "Myanmar (Burmese)",
+    "hello": "မင်္ဂလာပါ",
+    "tag": "my"
+  },
+  {
+    "language": "Nepali",
+    "hello": "नमस्ते",
+    "tag": "ne"
+  },
+  {
+    "language": "Norwegian",
+    "hello": "Hallo",
+    "tag": "no"
+  },
+  {
+    "language": "Pashto",
+    "hello": "سلام",
+    "tag": "ps"
+  },
+  {
+    "language": "Persian",
+    "hello": "سلام",
+    "tag": "fa"
+  },
+  {
+    "language": "Polish",
+    "hello": "Cześć",
+    "tag": "pl"
+  },
+  {
+    "language": "Portuguese",
+    "hello": "Olá",
+    "tag": "pt"
+  },
+  {
+    "language": "Punjabi",
+    "hello": "ਹੈਲੋ",
+    "tag": "pa"
+  },
+  {
+    "language": "Romanian",
+    "hello": "Alo",
+    "tag": "ro"
+  },
+  {
+    "language": "Russian",
+    "hello": "привет",
+    "tag": "ru"
+  },
+  {
+    "language": "Samoan",
+    "hello": "Talofa",
+    "tag": "sm"
+  },
+  {
+    "language": "Scots Gaelic",
+    "hello": "Hello",
+    "tag": "sco"
+  },
+  {
+    "language": "Serbian",
+    "hello": "Здраво",
+    "tag": "sr"
+  },
+  {
+    "language": "Sesotho",
+    "hello": "Hello",
+    "tag": "st"
+  },
+  {
+    "language": "Shona",
+    "hello": "Hello",
+    "tag": "sn"
+  },
+  {
+    "language": "Sindhi",
+    "hello": "هيلو",
+    "tag": "sd"
+  },
+  {
+    "language": "Sinhala",
+    "hello": "හෙලෝ",
+    "tag": "si"
+  },
+  {
+    "language": "Slovak",
+    "hello": "ahoj",
+    "tag": "sk"
+  },
+  {
+    "language": "Slovenian",
+    "hello": "Pozdravljeni",
+    "tag": "sl"
+  },
+  {
+    "language": "Somali",
+    "hello": "Hello",
+    "tag": "so"
+  },
+  {
+    "language": "Spanish",
+    "hello": "Hola",
+    "tag": "es"
+  },
+  {
+    "language": "Sundanese",
+    "hello": "halo",
+    "tag": "apd"
+  },
+  {
+    "language": "Swahili",
+    "hello": "Sawa",
+    "tag": "sw"
+  },
+  {
+    "language": "Swedish",
+    "hello": "Hallå",
+    "tag": "sv"
+  },
+  {
+    "language": "Tajik",
+    "hello": "Салом",
+    "tag": "tg"
+  },
+  {
+    "language": "Tamil",
+    "hello": "ஹலோ",
+    "tag": "ta"
+  },
+  {
+    "language": "Telugu",
+    "hello": "హలో",
+    "tag": "te"
+  },
+  {
+    "language": "Thai",
+    "hello": "สวัสดี",
+    "tag": "th"
+  },
+  {
+    "language": "Turkish",
+    "hello": "Merhaba",
+    "tag": "tr"
+  },
+  {
+    "language": "Ukrainian",
+    "hello": "Здрастуйте",
+    "tag": "uk"
+  },
+  {
+    "language": "Urdu",
+    "hello": "ہیلو",
+    "tag": "ur"
+  },
+  {
+    "language": "Uzbek",
+    "hello": "Salom",
+    "tag": "uz"
+  },
+  {
+    "language": "Vietnamese",
+    "hello": "Xin chào",
+    "tag": "vi"
+  },
+  {
+    "language": "Welsh",
+    "hello": "Helo",
+    "tag": "cy"
+  },
+  {
+    "language": "Xhosa",
+    "hello": "Sawubona",
+    "tag": "xh"
+  },
+  {
+    "language": "Yiddish",
+    "hello": "העלא",
+    "tag": "ji"
+  },
+  {
+    "language": "Yoruba",
+    "hello": "Kaabo",
+    "tag": "yo"
+  },
+  {
+    "language": "Zulu",
+    "hello": "Sawubona",
+    "tag": "zu"
+  }
+]

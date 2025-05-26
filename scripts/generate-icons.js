@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
 
 // Ruta al icono SVG placeholder
-const svgPath = path.join(__dirname, '../public/icons/icon-placeholder.svg');
+const svgPath = path.join(__dirname, '../public/icons/');
 
 // Directorio de salida
 const outputDir = path.join(__dirname, '../public/icons');
