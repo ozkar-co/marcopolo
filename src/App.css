@@ -844,31 +844,47 @@ body.game-page {
   padding-bottom: 10px;
 }
 
-.highscores-list {
-  margin-top: 20px;
+.highscores-table-container {
   max-height: 400px;
   overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
 }
 
-.highscores-list table {
+.highscores-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-.highscores-list th, .highscores-list td {
-  padding: 10px;
+.highscores-table thead {
+  position: sticky;
+  top: 0;
+  background-color: rgba(255, 250, 240, 0.95);
+  z-index: 1;
+}
+
+.highscores-table th {
+  padding: 15px 20px;
+  text-align: left;
+  border-bottom: 2px solid var(--border-color);
+  font-weight: 600;
+  color: var(--primary-color);
+  white-space: nowrap;
+}
+
+.highscores-table td {
+  padding: 12px 20px;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
 }
 
-.highscores-list th {
-  background-color: rgba(210, 180, 140, 0.3);
-  font-weight: 600;
-  color: var(--primary-color);
+.highscores-table tbody tr:nth-child(even) {
+  background-color: rgba(210, 180, 140, 0.1);
 }
 
-.highscores-list tr:nth-child(even) {
-  background-color: rgba(210, 180, 140, 0.1);
+.highscores-table tbody tr:hover {
+  background-color: rgba(210, 180, 140, 0.2);
 }
 
 .submit-score {

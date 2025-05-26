@@ -17,7 +17,14 @@ const Highscores = ({ gameType, attempts, totalDistance }: HighscoresProps) => {
     const fetchHighscores = async () => {
       try {
         const data = await getHighscores(gameType);
-        setHighscores(data);
+        // Sort highscores by attempts (ascending) and score (descending)
+        const sortedData = [...data].sort((a, b) => {
+          if (a.attempts !== b.attempts) {
+            return a.attempts - b.attempts;
+          }
+          return b.score - a.score;
+        });
+        setHighscores(sortedData);
         setLoading(false);
       } catch (err) {
         setError('Failed to load highscores');
@@ -34,28 +41,30 @@ const Highscores = ({ gameType, attempts, totalDistance }: HighscoresProps) => {
   return (
     <div className="highscores-container">
       <h2>Top Scores</h2>
-      <table className="highscores-table">
-        <thead>
-          <tr>
-            <th>Player</th>
-            <th>Score</th>
-            <th>Attempts</th>
-            <th>Hints</th>
-            {gameType === GameType.COUNTRY_DISTANCE_DISTANCE && <th>Distance</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {highscores.map((score, index) => (
-            <tr key={index}>
-              <td>{score.player}</td>
-              <td>{score.score}</td>
-              <td>{score.attempts}</td>
-              <td>{score.hints}</td>
-              {gameType === GameType.COUNTRY_DISTANCE_DISTANCE && <td>{score.score} km</td>}
+      <div className="highscores-table-container">
+        <table className="highscores-table">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Score</th>
+              <th>Attempts</th>
+              <th>Hints</th>
+              {gameType === GameType.COUNTRY_DISTANCE && <th>Distance</th>}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {highscores.map((score, index) => (
+              <tr key={index}>
+                <td>{score.player}</td>
+                <td>{score.score}</td>
+                <td>{score.attempts}</td>
+                <td>{score.hints}</td>
+                {gameType === GameType.COUNTRY_DISTANCE && <td>{score.score} km</td>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
