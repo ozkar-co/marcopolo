@@ -4,16 +4,12 @@ import GameMap from './components/GameMap'
 import FlagGame from './components/FlagGame'
 import { Country, getRandomCountry } from './data/countries'
 import Highscores from './components/Highscores'
-import { GameType as FirebaseGameType, saveHighscore, WinningCountry } from './firebase/highscores'
+import { GameType } from './types/game'
+import { submitHighscore, Highscore } from './services/highscores'
 
 interface Guess {
   country: Country;
   distance: number;
-}
-
-enum GameType {
-  COUNTRY = 'country',
-  FLAG = 'flag'
 }
 
 enum PageType {
@@ -59,14 +55,14 @@ function App() {
   }, [currentPage]);
 
   useEffect(() => {
-    if (gameStarted && !targetCountry && gameType === GameType.COUNTRY) {
+    if (gameStarted && !targetCountry && gameType === GameType.COUNTRY_DISTANCE) {
       setTargetCountry(getRandomCountry());
     }
   }, [gameStarted, targetCountry, gameType]);
 
   useEffect(() => {
     // Mostrar el modal cuando el juego termina
-    if (gameOver && (gameType === GameType.COUNTRY || flagGameCompleted)) {
+    if (gameOver && (gameType === GameType.COUNTRY_DISTANCE || flagGameCompleted)) {
       setShowModal(true);
     }
   }, [gameOver, gameType, flagGameCompleted]);
@@ -90,7 +86,7 @@ function App() {
   };
 
   const startNewGame = (type: GameType) => {
-    if (type === GameType.COUNTRY) {
+    if (type === GameType.COUNTRY_DISTANCE) {
       setTargetCountry(getRandomCountry());
       setGuesses([]);
       // Activar el reinicio del globo
@@ -150,8 +146,8 @@ function App() {
 
   // Función para reiniciar el juego actual
   const restartCurrentGame = () => {
-    if (gameType === GameType.COUNTRY) {
-      startNewGame(GameType.COUNTRY);
+    if (gameType === GameType.COUNTRY_DISTANCE) {
+      startNewGame(GameType.COUNTRY_DISTANCE);
     } else {
       handleNewFlagGame();
     }
@@ -170,30 +166,24 @@ function App() {
   };
 
   // Guardar la puntuación
-  const saveScore = async () => {
-    if (playerName.trim() && !scoreSubmitted) {
-      try {
-        // Guardar la puntuación directamente
-        await saveHighscore({
-          playerName: playerName.trim(),
-          score: attempts, // Usamos directamente el número de intentos como score
-          gameType: gameType === GameType.COUNTRY ? FirebaseGameType.COUNTRY : FirebaseGameType.FLAG,
-          attempts: attempts,
-          totalDistance: totalDistance || 0,
-          usedHint: usedHint || false,
-          totalHints: totalHints || 0,
-          winningCountry: winningCountry
-        });
-        
-        // Marcar como enviada
-        setScoreSubmitted(true);
-        
-        // Cerrar el modal de victoria y mostrar las puntuaciones
-        setShowModal(false);
-        setShowHighscores(true);
-      } catch (error) {
-        console.error('Error al guardar la puntuación:', error);
-      }
+  const handleSaveHighscore = async (playerName: string, score: number, attempts: number, hints: number, winningCountry?: { name: string; code: string }) => {
+    try {
+      const highscore: Highscore = {
+        game: gameType === GameType.COUNTRY_DISTANCE ? 'country_distance' : 'flag',
+        player: playerName,
+        score: gameType === GameType.COUNTRY_DISTANCE ? totalDistance : score,
+        attempts,
+        hints,
+        ...(winningCountry && {
+          win_country_name: winningCountry.name,
+          win_country_code: winningCountry.code
+        })
+      };
+      
+      await submitHighscore(highscore);
+      setShowHighscores(true);
+    } catch (error) {
+      console.error('Error saving highscore:', error);
     }
   };
 
@@ -223,7 +213,7 @@ function App() {
               <div className="game-option">
                 <h3>Adivina el País</h3>
                 <p>Adivina un país aleatorio basado en su ubicación en el mapa.</p>
-                <button className="start-button" onClick={() => startNewGame(GameType.COUNTRY)}>
+                <button className="start-button" onClick={() => startNewGame(GameType.COUNTRY_DISTANCE)}>
                   Jugar
                 </button>
               </div>
@@ -274,7 +264,7 @@ function App() {
 
         {currentPage === PageType.GAME && (
           <div className="game-container">
-            {gameType === GameType.COUNTRY && targetCountry && (
+            {gameType === GameType.COUNTRY_DISTANCE && targetCountry && (
               <GameMap 
                 targetCountry={targetCountry} 
                 guesses={guesses} 
@@ -319,7 +309,7 @@ function App() {
               <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
               <h2>¡Felicidades!</h2>
               
-              {gameType === GameType.COUNTRY ? (
+              {gameType === GameType.COUNTRY_DISTANCE ? (
                 <>
                   <p>Has encontrado el país correcto.</p>
                   <p>Tu puntuación: {attempts} intentos (distancia total: {totalDistance.toFixed(0)} km)</p>
@@ -345,7 +335,7 @@ function App() {
               <div className="modal-buttons">
                 <button 
                   className="modal-button" 
-                  onClick={saveScore}
+                  onClick={() => handleSaveHighscore(playerName, attempts, attempts, totalHints, winningCountry)}
                   disabled={!playerName.trim()}
                 >
                   Guardar puntuación
@@ -370,7 +360,7 @@ function App() {
             <div className="highscores-modal-content">
               <button className="highscores-modal-close" onClick={toggleHighscores}>×</button>
               <Highscores 
-                gameType={gameType === GameType.COUNTRY ? FirebaseGameType.COUNTRY : FirebaseGameType.FLAG}
+                gameType={gameType === GameType.COUNTRY_DISTANCE ? 'country_distance' : 'flag'}
                 attempts={attempts}
                 totalDistance={totalDistance}
                 usedHint={usedHint}

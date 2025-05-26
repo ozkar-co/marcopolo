@@ -37,9 +37,9 @@ async function migrateHighscores() {
       
       // Transform the data according to the new structure
       const newHighscore = {
-        game: data.gameType === 'COUNTRY' ? 'country_distance' : 'flag',
+        game: data.gameType === 'country' ? 'country_distance' : 'flag',
         player: data.playerName,
-        score: data.gameType === 'COUNTRY' ? (data.totalDistance || 0) : data.score,
+        score: data.gameType === 'country' ? (data.totalDistance || 0) : data.score,
         attempts: data.attempts,
         hints: data.totalHints || 0,
       };
