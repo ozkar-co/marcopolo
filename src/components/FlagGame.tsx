@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Country, countries } from '../data/countries';
 
 // Función para normalizar texto (eliminar acentos y convertir a minúsculas)
@@ -9,24 +9,20 @@ const normalizeText = (text: string): string => {
     .replace(/[\u0300-\u036f]/g, "");
 };
 
-// Función para obtener la URL de la bandera con altura fija o tamaño específico
+// Función para obtener la URL de la bandera
 const getFlagUrl = (countryCode: string, height: number = 120): string => {
-  // Para miniaturas (16px de altura), usar el formato 16x12
-  if (height === 16) {
-    return `https://flagcdn.com/16x12/${countryCode.toLowerCase()}.png`;
-  }
-  // Para otros tamaños, usar el formato h{height}
-  return `https://flagcdn.com/h${height}/${countryCode.toLowerCase()}.png`;
+  return height === 16
+    ? `https://flagcdn.com/16x12/${countryCode.toLowerCase()}.png`
+    : `https://flagcdn.com/h${height}/${countryCode.toLowerCase()}.png`;
 };
 
 interface FlagGameProps {
-  onCorrectGuess: (attempts: number, usedHint: boolean, totalHints: number) => void;
+  onCorrectGuess: (attempts: number, usedHint: boolean, totalHints: number, timeSpent: number, hardestCountry: { name: string; code: string; attempts: number }) => void;
   onNewGame: () => void;
   gameOver: boolean;
   onGameOver: (isCorrect: boolean) => void;
 }
 
-// Interfaz para una ronda de juego
 interface Round {
   country: Country;
   attempts: number;
@@ -49,7 +45,24 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
   const [currentRound, setCurrentRound] = useState(0);
   const [totalAttempts, setTotalAttempts] = useState(0);
   const [totalHints, setTotalHints] = useState(0);
+  const [startTime, setStartTime] = useState<number>(0);
+  const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const [hardestCountry, setHardestCountry] = useState<{ name: string; code: string; attempts: number } | null>(null);
+  
   const TOTAL_ROUNDS = 10;
+
+  // Timer effect
+  useEffect(() => {
+    let timer: number;
+    if (!gameOverState && startTime > 0) {
+      timer = window.setInterval(() => {
+        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [gameOverState, startTime]);
 
   // Inicializar el juego
   useEffect(() => {
@@ -64,11 +77,10 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
     setGameOverState(gameOver);
   }, [gameOver]);
 
-  // Filtrar sugerencias basadas en el input y excluir países ya intentados
+  // Filtrar sugerencias basadas en el input
   useEffect(() => {
     if (inputValue.length > 1) {
       const normalizedInput = normalizeText(inputValue);
-      // Filtrar países que coinciden con la entrada y que no han sido intentados
       const attemptedCountryNames = attempts.map(a => normalizeText(a.name));
       const filteredCountries = countries.filter(country => 
         normalizeText(country.name).includes(normalizedInput) && 
@@ -81,21 +93,20 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
   }, [inputValue, attempts]);
 
   // Generar un país aleatorio que no esté en las rondas actuales
-  const getRandomCountryForRound = (): Country => {
+  const getRandomCountryForRound = useCallback((): Country => {
     const usedCountries = rounds.map(round => round.country.code);
     let availableCountries = countries.filter(country => !usedCountries.includes(country.code));
     
-    // Si no hay suficientes países disponibles, usar todos los países
     if (availableCountries.length === 0) {
       availableCountries = countries;
     }
     
     const randomIndex = Math.floor(Math.random() * availableCountries.length);
     return availableCountries[randomIndex];
-  };
+  }, [rounds]);
 
   // Iniciar una nueva ronda
-  const startNewRound = () => {
+  const startNewRound = useCallback(() => {
     if (currentRound < TOTAL_ROUNDS) {
       const newCountry = getRandomCountryForRound();
       setTargetCountry(newCountry);
@@ -105,7 +116,6 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
       setMessage('');
       setShowHint(false);
       
-      // Actualizar el estado de la ronda actual
       const updatedRounds = [...rounds];
       if (!updatedRounds[currentRound]) {
         updatedRounds[currentRound] = {
@@ -117,71 +127,68 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
         setRounds(updatedRounds);
       }
     } else {
-      // Todas las rondas completadas, finalizar el juego
       finishGame();
     }
-  };
+  }, [currentRound, getRandomCountryForRound, rounds]);
 
   // Iniciar un nuevo juego completo
-  const startNewGame = () => {
+  const startNewGame = useCallback(() => {
     setRounds([]);
     setCurrentRound(0);
     setTotalAttempts(0);
     setTotalHints(0);
     setGameOverState(false);
+    setStartTime(Date.now());
+    setElapsedTime(0);
+    setHardestCountry(null);
     
     // Iniciar la primera ronda
     setTimeout(() => {
       startNewRound();
     }, 0);
-  };
+  }, [startNewRound]);
 
   // Finalizar el juego y enviar la puntuación
-  const finishGame = () => {
-    // Solo cuando se completan todas las rondas, notificar al componente padre
-    onCorrectGuess(totalAttempts, totalHints > 0, totalHints);
+  const finishGame = useCallback(() => {
+    // Encontrar el país con más intentos
+    const hardestRound = rounds.reduce((max, round) => 
+      round.attempts > max.attempts ? round : max
+    , rounds[0]);
+
+    const hardestCountryData = {
+      name: hardestRound.country.name,
+      code: hardestRound.country.code,
+      attempts: hardestRound.attempts
+    };
+
+    onCorrectGuess(totalAttempts, totalHints > 0, totalHints, elapsedTime, hardestCountryData);
     onGameOver(true);
     setGameOverState(true);
-  };
+  }, [rounds, totalAttempts, totalHints, elapsedTime, onCorrectGuess, onGameOver]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
     setMessage('');
   };
 
-  // Modificar el manejo de la tecla Enter para que funcione con una sola pulsación
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && suggestions.length > 0 && !isProcessingSelection) {
-      e.preventDefault(); // Prevenir comportamiento por defecto
-      
-      // Marcar que estamos procesando una selección
+      e.preventDefault();
       setIsProcessingSelection(true);
-      
-      // Capturar la primera sugerencia
       const selectedCountry = suggestions[0];
-      
-      // Limpiar el input y las sugerencias
       setInputValue('');
       setSuggestions([]);
-      
-      // Procesar la selección
       handleGuessWithCountry(selectedCountry);
-      
-      // Desmarcar el procesamiento después de un breve retraso
       setTimeout(() => {
         setIsProcessingSelection(false);
       }, 100);
     }
   };
 
-  const handleGuessWithCountry = (country: Country) => {
-    // Evitar procesamiento si ya estamos procesando una selección
+  const handleGuessWithCountry = useCallback((country: Country) => {
     if (isProcessingSelection) return;
-    
-    // Marcar que estamos procesando una selección
     setIsProcessingSelection(true);
     
-    // Verificar si ya se ha intentado con este país
     const normalizedName = normalizeText(country.name);
     if (attempts.some(attempt => normalizeText(attempt.name) === normalizedName)) {
       setMessage('Ya has intentado con este país.');
@@ -189,47 +196,47 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
       return;
     }
     
-    // Asegurarse de que rounds[currentRound] existe antes de incrementar los intentos
-    if (!rounds[currentRound]) {
-      // Si no existe, inicializarlo
-      const newRounds = [...rounds];
-      newRounds[currentRound] = {
+    // Create a new rounds array with the current round initialized if needed
+    const updatedRounds = [...rounds];
+    if (!updatedRounds[currentRound]) {
+      updatedRounds[currentRound] = {
         country: targetCountry!,
         attempts: 0,
         usedHint: showHint,
         completed: false
       };
-      setRounds(newRounds);
     }
     
-    // Incrementar el número de intentos para la ronda actual
-    const updatedRounds = [...rounds];
-    updatedRounds[currentRound].attempts += 1;
+    // Update the round's attempts
+    updatedRounds[currentRound] = {
+      ...updatedRounds[currentRound],
+      attempts: (updatedRounds[currentRound].attempts || 0) + 1
+    };
+    
+    // Update state
     setRounds(updatedRounds);
     setTotalAttempts(prev => prev + 1);
     
-    // Verificar si es el país correcto
     if (targetCountry && normalizeText(country.name) === normalizeText(targetCountry.name)) {
-      // Actualizar el estado de la ronda actual como completada
-      updatedRounds[currentRound].completed = true;
-      updatedRounds[currentRound].usedHint = showHint;
+      // Update the round as completed
+      updatedRounds[currentRound] = {
+        ...updatedRounds[currentRound],
+        completed: true,
+        usedHint: showHint
+      };
       setRounds(updatedRounds);
       
-      // Actualizar el contador de pistas si se usó una
       if (showHint) {
         setTotalHints(prev => prev + 1);
       }
       
-      // Mostrar mensaje de éxito
       setMessage(`¡Correcto! Has adivinado el país. Ronda ${currentRound + 1}/${TOTAL_ROUNDS} completada.`);
       
-      // Pasar a la siguiente ronda después de un breve retraso
       setTimeout(() => {
         if (currentRound + 1 < TOTAL_ROUNDS) {
           setCurrentRound(prev => prev + 1);
           startNewRound();
         } else {
-          // Todas las rondas completadas
           finishGame();
         }
       }, 1500);
@@ -240,45 +247,21 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
       setSuggestions([]);
     }
     
-    // Desmarcar el procesamiento al final
     setTimeout(() => {
       setIsProcessingSelection(false);
     }, 100);
-  };
-
-  const handleGuess = () => {
-    if (inputValue.trim() === '') return;
-    
-    // Buscar el país que coincide con la entrada del usuario
-    const normalizedInput = normalizeText(inputValue);
-    const guessedCountry = countries.find(country => 
-      normalizeText(country.name) === normalizedInput
-    );
-    
-    // Verificar si el país existe
-    if (!guessedCountry) {
-      setMessage('País no encontrado. Intenta con otro nombre.');
-      return;
-    }
-    
-    handleGuessWithCountry(guessedCountry);
-  };
+  }, [attempts, currentRound, finishGame, isProcessingSelection, rounds, showHint, startNewRound, targetCountry]);
 
   const showHintHandler = () => {
     setShowHint(true);
-    
-    // Marcar que se usó una pista en esta ronda
     const updatedRounds = [...rounds];
     updatedRounds[currentRound].usedHint = true;
     setRounds(updatedRounds);
   };
 
-  // Función para generar una pista más vaga sobre el continente
   const getVagueHint = (country: Country): string => {
     const continent = getContinent(country);
-    const vagueContinent = `${continent} o sus alrededores`;
-    
-    return `Podría estar en ${vagueContinent}, pero estoy seguro que su capital es ${country.capital}.`;
+    return `Podría estar en ${continent} o sus alrededores, pero estoy seguro que su capital es ${country.capital}.`;
   };
 
   return (
@@ -287,7 +270,7 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
         <div className="flag-container">
           <div className="round-indicator">
             <h3>Ronda {currentRound + 1} de {TOTAL_ROUNDS}</h3>
-            <p>Intentos totales: {totalAttempts} | Pistas usadas: {totalHints}</p>
+            <p>Intentos totales: {totalAttempts} | Pistas usadas: {totalHints} | Tiempo: {elapsedTime}s</p>
           </div>
           
           <img 
@@ -295,7 +278,6 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
             alt="Bandera para adivinar" 
             className="flag-image"
             onError={(e) => {
-              // Si la imagen falla, usar una imagen de respaldo
               (e.target as HTMLImageElement).src = 'https://flagcdn.com/h120/xx.png';
             }}
           />
@@ -321,17 +303,10 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
                     key={country.name} 
                     onClick={() => {
                       if (!isProcessingSelection) {
-                        // Marcar que estamos procesando una selección
                         setIsProcessingSelection(true);
-                        
-                        // Limpiar el input y las sugerencias
                         setInputValue('');
                         setSuggestions([]);
-                        
-                        // Procesar la selección
                         handleGuessWithCountry(country);
-                        
-                        // Desmarcar el procesamiento después de un breve retraso
                         setTimeout(() => {
                           setIsProcessingSelection(false);
                         }, 100);
@@ -380,7 +355,6 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
                       alt={`Bandera de ${attempt.name}`}
                       className="country-flag"
                       onError={(e) => {
-                        // Si la imagen falla, usar una imagen de respaldo que coincida con el tamaño
                         (e.target as HTMLImageElement).src = 'https://flagcdn.com/16x12/xx.png';
                       }}
                     />
@@ -421,7 +395,6 @@ const FlagGame: React.FC<FlagGameProps> = ({ onCorrectGuess, onNewGame, gameOver
 const getContinent = (country: Country): string => {
   const { latitude, longitude } = country;
   
-  // Clasificación simplificada por coordenadas
   if (latitude > 30 && longitude > -30 && longitude < 60) return "Europa";
   if (latitude > 0 && longitude > 60) return "Asia";
   if (latitude < 0 && longitude > 100) return "Oceanía";

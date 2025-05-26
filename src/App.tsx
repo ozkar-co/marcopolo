@@ -12,6 +12,12 @@ interface Guess {
   distance: number;
 }
 
+interface WinningCountry {
+  name: string;
+  code: string;
+  attempts?: number;
+}
+
 enum PageType {
   HOME = 'home',
   GAME = 'game',
@@ -37,6 +43,7 @@ function App() {
   const [resetGlobe, setResetGlobe] = useState(false);
   // Estado para controlar si el juego de banderas ha completado todas las rondas
   const [flagGameCompleted, setFlagGameCompleted] = useState(false);
+  const [gameTime, setGameTime] = useState(0);
 
   // Efecto para cambiar la clase del body según el estado del juego
   useEffect(() => {
@@ -109,11 +116,16 @@ function App() {
     setFlagGameCompleted(false);
   };
 
-  const handleCorrectFlagGuess = (attemptsCount: number, hintUsed: boolean, hintsCount: number) => {
-    // Esta función ahora solo se llama cuando se completan todas las rondas
+  const handleCorrectFlagGuess = (attemptsCount: number, hintUsed: boolean, hintsCount: number, timeSpent: number, hardestCountry: { name: string; code: string; attempts: number }) => {
     setAttempts(attemptsCount);
     setUsedHint(hintUsed);
     setTotalHints(hintsCount);
+    setGameTime(timeSpent);
+    setWinningCountry({
+      name: hardestCountry.name,
+      code: hardestCountry.code,
+      attempts: hardestCountry.attempts
+    });
     setGameOver(true);
     setFlagGameCompleted(true);
   };
@@ -166,17 +178,18 @@ function App() {
   };
 
   // Guardar la puntuación
-  const handleSaveHighscore = async (playerName: string, score: number, attempts: number, hints: number, winningCountry?: { name: string; code: string }) => {
+  const handleSaveHighscore = async (playerName: string, score: number, attempts: number, hints: number, winningCountry?: WinningCountry) => {
     try {
       const highscore: Highscore = {
         game: gameType === GameType.COUNTRY_DISTANCE ? 'country_distance' : 'flag',
         player: playerName,
-        score: gameType === GameType.COUNTRY_DISTANCE ? totalDistance : score,
+        score: gameType === GameType.COUNTRY_DISTANCE ? totalDistance : gameTime,
         attempts,
         hints,
         ...(winningCountry && {
           win_country_name: winningCountry.name,
-          win_country_code: winningCountry.code
+          win_country_code: winningCountry.code,
+          win_country_attempts: winningCountry.attempts
         })
       };
       
@@ -317,7 +330,10 @@ function App() {
               ) : (
                 <>
                   <p>Has completado las 10 rondas del juego de banderas.</p>
-                  <p>Tu puntuación: {attempts} intentos totales {totalHints > 0 ? `(${totalHints} pistas usadas)` : '(sin pistas)'}</p>
+                  <p>Tu puntuación: {attempts} intentos totales en {gameTime} segundos {totalHints > 0 ? `(${totalHints} pistas usadas)` : '(sin pistas)'}</p>
+                  {winningCountry && (
+                    <p>País más difícil: {winningCountry.name} ({winningCountry.attempts} intentos)</p>
+                  )}
                 </>
               )}
               
@@ -360,16 +376,9 @@ function App() {
             <div className="highscores-modal-content">
               <button className="highscores-modal-close" onClick={toggleHighscores}>×</button>
               <Highscores 
-                gameType={gameType === GameType.COUNTRY_DISTANCE ? 'country_distance' : 'flag'}
+                gameType={gameType || GameType.COUNTRY_DISTANCE}
                 attempts={attempts}
                 totalDistance={totalDistance}
-                usedHint={usedHint}
-                totalHints={totalHints}
-                winningCountry={winningCountry}
-                isGameOver={gameOver}
-                onClose={toggleHighscores}
-                playerName={playerName}
-                scoreSubmitted={scoreSubmitted}
               />
             </div>
           </div>
