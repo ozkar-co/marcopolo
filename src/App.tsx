@@ -6,6 +6,7 @@ import { Country, getRandomCountry } from './data/countries'
 import Highscores from './components/Highscores'
 import { GameType } from './types/game'
 import { submitHighscore, Highscore } from './services/highscores'
+import AllCountriesGame from './components/AllCountriesGame'
 
 interface Guess {
   country: Country;
@@ -238,6 +239,13 @@ function App() {
                   Jugar
                 </button>
               </div>
+              <div className="game-option">
+                <h3>Todos los Países</h3>
+                <p>Escribe todos los países que puedas lo más rápido posible.</p>
+                <button className="start-button" onClick={() => startNewGame(GameType.ALL_COUNTRIES)}>
+                  Jugar
+                </button>
+              </div>
             </div>
 
             <div className="about-section">
@@ -301,6 +309,22 @@ function App() {
               />
             )}
 
+            {gameType === GameType.ALL_COUNTRIES && (
+              <AllCountriesGame
+                gameOver={gameOver}
+                onGameOver={(score, attempts, winningCountry, guessedCountries, time) => {
+                  setGameOver(true);
+                  setAttempts(guessedCountries.length + attempts);
+                  setTotalDistance(score); // Aquí el score es el tiempo
+                  setWinningCountry({
+                    name: winningCountry.name,
+                    code: winningCountry.code
+                  });
+                  setShowModal(true);
+                }}
+              />
+            )}
+
             <div className="game-controls">
               <button className="highscores-button" onClick={toggleHighscores}>
                 Ver Puntuaciones
@@ -326,6 +350,15 @@ function App() {
                 <>
                   <p>Has encontrado el país correcto.</p>
                   <p>Tu puntuación: {attempts} intentos (distancia total: {totalDistance.toFixed(0)} km)</p>
+                </>
+              ) : gameType === GameType.ALL_COUNTRIES ? (
+                <>
+                  <p>¡Juego terminado!</p>
+                  <p>Países adivinados: {attempts} / {winningCountry ? attempts : ''}</p>
+                  <p>Tiempo: {totalDistance} segundos</p>
+                  {winningCountry && (
+                    <p>Último país adivinado: {winningCountry.name}</p>
+                  )}
                 </>
               ) : (
                 <>
