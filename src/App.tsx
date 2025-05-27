@@ -264,7 +264,7 @@ function App() {
               </p>
               <p>
                 Este proyecto fue inspirado por <strong>Alejandro Sánchez</strong> y construido con pasión por 
-                <a href="https://ozcodx.github.io" target="_blank" rel="noopener noreferrer"> Oz</a>. 
+                <a href="https://ozkar.co" target="_blank" rel="noopener noreferrer"> Oz</a>. 
                 Somos dos primos que compartimos el amor por los viajes, los puzzles y los retos geográficos.
               </p>
               <p>

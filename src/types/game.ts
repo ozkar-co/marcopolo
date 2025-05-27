@@ -3,6 +3,6 @@ export enum GameType {
   FLAG = 'flag',
   ALL_COUNTRIES = 'all_countries',
   COUNTRY = 'country',
-  GREETING = 'greeting'
-  //CAPITAL_CITY = 'capital_city'
+  GREETING = 'greeting',
+  CAPITAL_CITY = 'capital_city'
 } 
