@@ -4,7 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://forja-api.onrender.com/
 const API_KEY = import.meta.env.VITE_API_KEY;
 
 export interface Highscore {
-  game: 'country_distance' | 'flag';
+  game: 'country_distance' | 'flag' | 'all_countries';
   player: string;
   score: number;
   attempts: number;
@@ -14,7 +14,21 @@ export interface Highscore {
 }
 
 export async function getHighscores(gameType: GameType): Promise<Highscore[]> {
-  const game = gameType === GameType.COUNTRY_DISTANCE ? 'country_distance' : 'flag';
+  let game: 'country_distance' | 'flag' | 'all_countries';
+  switch (gameType) {
+    case GameType.COUNTRY_DISTANCE:
+      game = 'country_distance';
+      break;
+    case GameType.FLAG:
+      game = 'flag';
+      break;
+    case GameType.ALL_COUNTRIES:
+      game = 'all_countries';
+      break;
+    default:
+      game = 'country_distance';
+  }
+  
   const response = await fetch(`${API_URL}/highscores/${game}`, {
     headers: {
       'X-API-Key': API_KEY,

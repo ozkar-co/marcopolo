@@ -45,6 +45,8 @@ function App() {
   // Estado para controlar si el juego de banderas ha completado todas las rondas
   const [flagGameCompleted, setFlagGameCompleted] = useState(false);
   const [gameTime, setGameTime] = useState(0);
+  const [guessedCount, setGuessedCount] = useState(0); // Para ALL_COUNTRIES
+  const [missingCount, setMissingCount] = useState(0); // Para ALL_COUNTRIES
 
   // Efecto para cambiar la clase del body según el estado del juego
   useEffect(() => {
@@ -181,21 +183,51 @@ function App() {
   // Guardar la puntuación
   const handleSaveHighscore = async (playerName: string, score: number, attempts: number, hints: number, winningCountry?: WinningCountry) => {
     try {
-      const highscore: Highscore = {
-        game: gameType === GameType.COUNTRY_DISTANCE ? 'country_distance' : 'flag',
-        player: playerName,
-        score: gameType === GameType.COUNTRY_DISTANCE ? totalDistance : gameTime,
-        attempts,
-        hints,
-        ...(winningCountry && {
-          win_country_name: winningCountry.name,
-          win_country_code: winningCountry.code,
-          win_country_attempts: winningCountry.attempts
-        })
-      };
-      
+      let highscore: Highscore;
+      if (gameType === GameType.ALL_COUNTRIES) {
+        highscore = {
+          game: 'all_countries',
+          player: playerName,
+          score: totalDistance, // tiempo
+          attempts: missingCount, // faltantes
+          hints: totalHints,
+          ...(winningCountry && {
+            win_country_name: winningCountry.name,
+            win_country_code: winningCountry.code,
+            win_country_attempts: undefined
+          })
+        };
+      } else if (gameType === GameType.COUNTRY_DISTANCE) {
+        highscore = {
+          game: 'country_distance',
+          player: playerName,
+          score: totalDistance,
+          attempts,
+          hints,
+          ...(winningCountry && {
+            win_country_name: winningCountry.name,
+            win_country_code: winningCountry.code,
+            win_country_attempts: winningCountry.attempts
+          })
+        };
+      } else {
+        highscore = {
+          game: 'flag',
+          player: playerName,
+          score: gameTime,
+          attempts,
+          hints,
+          ...(winningCountry && {
+            win_country_name: winningCountry.name,
+            win_country_code: winningCountry.code,
+            win_country_attempts: winningCountry.attempts
+          })
+        };
+      }
       await submitHighscore(highscore);
       setShowHighscores(true);
+      setScoreSubmitted(true);
+      setShowModal(false); // Cierra el modal después de guardar
     } catch (error) {
       console.error('Error saving highscore:', error);
     }
@@ -313,14 +345,17 @@ function App() {
               <AllCountriesGame
                 gameOver={gameOver}
                 onGameOver={(score, attempts, winningCountry, guessedCountries, time) => {
-                  setGameOver(true);
-                  setAttempts(guessedCountries.length + attempts);
-                  setTotalDistance(score); // Aquí el score es el tiempo
-                  setWinningCountry({
-                    name: winningCountry.name,
-                    code: winningCountry.code
-                  });
-                  setShowModal(true);
+                  if (!gameOver) {  // Solo actualizar si el juego no ha terminado
+                    setGameOver(true);
+                    setGuessedCount(guessedCountries.length);
+                    setMissingCount(attempts);
+                    setTotalDistance(score); // Aquí el score es el tiempo
+                    setWinningCountry({
+                      name: winningCountry.name,
+                      code: winningCountry.code
+                    });
+                    setShowModal(true);
+                  }
                 }}
               />
             )}
@@ -354,7 +389,8 @@ function App() {
               ) : gameType === GameType.ALL_COUNTRIES ? (
                 <>
                   <p>¡Juego terminado!</p>
-                  <p>Países adivinados: {attempts} / {winningCountry ? attempts : ''}</p>
+                  <p>Países adivinados: {guessedCount} / {guessedCount + missingCount}</p>
+                  {missingCount > 0 && <p>Países faltantes: {missingCount}</p>}
                   <p>Tiempo: {totalDistance} segundos</p>
                   {winningCountry && (
                     <p>Último país adivinado: {winningCountry.name}</p>
@@ -384,8 +420,8 @@ function App() {
               <div className="modal-buttons">
                 <button 
                   className="modal-button" 
-                  onClick={() => handleSaveHighscore(playerName, attempts, attempts, totalHints, winningCountry)}
-                  disabled={!playerName.trim()}
+                  onClick={() => handleSaveHighscore(playerName, totalDistance, guessedCount, totalHints, winningCountry)}
+                  disabled={!playerName.trim() || scoreSubmitted}
                 >
                   Guardar puntuación
                 </button>
